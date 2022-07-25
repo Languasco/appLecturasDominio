@@ -1,0 +1,1465 @@
+﻿@{
+    ViewBag.Title = "Generacion Actas";
+    Layout = "~/Views/Shared/_LayoutPrincipal.cshtml";
+}
+
+@section instances{
+    @Styles.Render("~/Content/bootstrap-table/bootstrap-table.css")
+    @Scripts.Render("~/Content/bootstrap-table/bootstrap-table.js")
+    @Scripts.Render("~/Content/bootstrap-table/locale/bootstrap-table-es-MX.js")
+
+    @Scripts.Render("~/Content/bootstrap/js/bootstrap-toggle.min.js")
+    @Scripts.Render("~/Content/angular/angular.js")
+    <script src="~/Content/pdf/html2canvas.js"></script>
+
+    @Scripts.Render("~/Content/pdf/jspdf.js")
+    @Scripts.Render("~/Content/pdf/pdfFromHTML.js")
+    @Scripts.Render("~/Content/pdf/jspdf.plugin.autotable.js")
+    @Styles.Render("~/Content/bootstrap/css/bootstrap-toggle.min.css")
+
+    @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
+    @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
+    @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
+
+
+    @Styles.Render("~/Content/dataTables-bootstrap/css/dataTables.bootstrap.min.css")
+    @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
+    @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
+
+}
+
+<style>
+    .form-control {
+        font-size: 11px;
+        width: 100%;
+        height: 28px;
+    }
+
+    input[type="text"] {
+        font-size: 11px;
+    }
+
+    .btn {
+        font-size: 12px;
+    }
+
+    input[type="text"] {
+        font-size: 11px;
+    }
+
+    label {
+        font-family: "Tahoma", "Geneva", sans-serif;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .datepicker {
+        width: 200px;
+    }
+
+    table {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td, th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+ 
+</style>
+
+<script type="text/javascript">
+    var app = angular.module('appActas', []);
+
+    app.directive('onFinishRender', function ($timeout) {
+        return {
+            restrict: 'A',
+            link: function (scope, element, attr) {
+                if (scope.$last === true) {
+                    $timeout(function () {
+                        scope.$emit(attr.onFinishRender);
+                    });
+                }
+            }
+        }
+    });
+
+    app.controller('ctrlActas', function ($scope, $http, $window, $timeout, $q) {
+        $(function () {
+            $('#id_fecha').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+
+        $scope.Obj_List_Servicios = [];
+        $scope.Listado_Servicios = function () {
+            var variables = {
+                method: 'POST',
+                url: '../GeneracionActas/Servicios',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            }
+            $http(variables)
+            .success(function (data) {
+                $scope.Obj_List_Servicios = [];
+                $scope.Obj_List_Servicios = data;
+            })
+            .error(function () {
+                alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+            });
+        }
+
+
+        $scope.Obj_List_Operario = [];
+        $scope.Listado_Operarios = function () {
+            var variables = {
+                method: 'POST',
+                url: '../VerificacionFotos/ListandoOperarios',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            }
+            $http(variables)
+            .success(function (data) {
+                $scope.Obj_List_Operario = [];
+                $scope.Obj_List_Operario = data;
+            })
+            .error(function () {
+                alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+            });
+        }
+        ;
+
+        var oTable_cabecera = null;
+        $scope.$on('ngRepeatFinished_cabecera', function (ngRepeatFinishedEvent) {
+            oTable_cabecera = $('#tblLista').DataTable(
+                 {
+                     scrollY: "400px",
+                     paging: false,
+                 });
+        });
+
+
+        $scope.inicializando_variables = function () {
+            $scope.id_tipoServicio = '0';
+            $scope.id_operario = '0';
+            $scope.Listado_Servicios();
+            $scope.Listado_Operarios()
+        }
+
+
+        $scope.Obj_List_Cabecera = [];
+        $scope.Listado_Cabecera_Lecturas = function () {
+
+            var cbo_servicio = document.getElementById('cbo_servicio').value;
+            var cbo_operario = document.getElementById('cbo_operario').value;
+            var id_fecha = document.getElementById('id_fecha').value;
+
+            if (cbo_servicio == '' || cbo_servicio == 0) {
+                new PNotify({
+                    title: 'Sistemas',
+                    text: 'Por favor seleccione un Servicio.',
+                    type: 'error'
+                });
+                return;
+            }
+            if (id_fecha == '') {
+                new PNotify({
+                    title: 'Sistemas',
+                    text: 'Por favor ingrese o seleccione una Fecha Inicial.',
+                    type: 'error'
+                });
+                return;
+            }
+
+            $('.sige-load').show();
+
+            var variables = {
+                method: 'POST',
+                url: '../GeneracionActas/Mostrando_informacion_general',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                data: {
+                    servicio: cbo_servicio,
+                    operario: cbo_operario,
+                    fecha: id_fecha,
+                }
+            }
+            $http(variables)
+            .success(function (data) {
+                $scope.Obj_List_Cabecera = []; 
+                if (oTable_cabecera == null) {
+                    $scope.Obj_List_Cabecera = data;
+                } else {
+                    oTable_cabecera.clear();
+                    oTable_cabecera.destroy();
+                    oTable_cabecera = null;
+                    $scope.Obj_List_Cabecera = data;
+                } 
+                $timeout(function () {
+                    $('.sige-load').hide();
+                }, 1000);
+            })
+            .error(function () {
+                $('.sige-load').hide();
+                alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+
+            });
+        }
+
+        $scope.progress = 0;
+        function descargarFoto(item) {
+            var q = $q.defer();
+            $timeout(function () {
+                $scope.getPdf(item).then(function () {
+                    $scope.progress += (100 / (parseFloat($scope.Obj_List_Cabecera.length)));
+                    q.resolve('k');
+                });
+            }, 1000)
+            return q.promise;
+        }
+
+        $scope.descargarMasivo = function () {
+            var q = $q.defer();
+            $scope.progress = 0;
+            $scope.Obj_List_Cabecera.reduce(function (p, val) {
+                return p.then(function () {
+                    return descargarFoto(val);
+                });
+            }, $q.when(true)).then(function (finalResult) {
+                q.resolve('success');
+            }, function (err) {
+                q.reject(err);
+            });
+
+            return q.promise;
+
+        }
+
+        var getCodUniq = function () {
+            // CAPTURANDO FECHA ACTUAL
+            var hoy = new Date();
+            var dd = hoy.getDate();
+            var mm = hoy.getMonth() + 1;
+            var yyyy = hoy.getFullYear();
+            var hour = hoy.getHours();
+            var minuts = hoy.getMinutes();
+            var second = hoy.getSeconds();
+            if (dd < 10) {
+                dd = '0' + dd
+            }
+
+            if (mm < 10) {
+                mm = '0' + mm
+            }
+            hoy = yyyy + '' + mm + '' + dd + '' + hour + '' + minuts + '' + second;
+            // GENERANDO CODIGO ALEATORIO
+            var codigoAle = Math.floor(Math.random() * 1000000);
+
+            return codigoAle + '_' + hoy;
+        }
+
+         $scope.getPdf = function (obj_data) {
+           var q = $q.defer();
+
+           if (obj_data.id_TipoServicio == 3 || obj_data.id_TipoServicio == '3') // SERVICIO DE CORTES
+           {
+
+               console.log(obj_data)
+
+                var doc = new jsPDF();
+                var altura = 30;
+               var imgLogo = 'data:image/jpeg;base64,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';
+                doc.addImage(imgLogo, 'JPEG', 10, 4, 60, 25)
+                doc.setFontSize(7);
+                //doc.text(40, 8, 'Contratista al servicio de :');
+                doc.setFontSize(7);
+                doc.setFont("courier");
+                doc.setFontType("bold");
+                doc.text(80, 10, 'Gas Natural de Lima y Callao S.A');
+                doc.setFontType("normal");
+                doc.text(80, 14, 'Calle Morelli Nro. 150 Urb. San Borja');
+                doc.text(80, 18, '(Torre 2 CC la Rambla) Lima - Lima - San Borja');
+
+                doc.setFontSize(12);
+                doc.setFontType("bold");
+                doc.text(65, altura, 'ORDEN DE SUSPENSION DEL SERVICIO');
+                altura = altura + 10;
+                doc.setFontSize(7);
+                doc.setFontType("normal");
+                doc.text(10, altura, 'FECHA : ' + String(obj_data.fecha));
+                doc.text(80, altura, 'HORA : ' + String(obj_data.hora));
+                doc.text(130, altura, 'CLIENTE N° : ' + String(obj_data.cliente_suministro));
+                altura = altura + 4;
+                doc.text(10, altura, 'INSTALACION : ' + String(obj_data.instalacion));
+                doc.text(80, altura, 'MEDIDOR N° : ' + String(obj_data.medidor));
+                doc.text(130, altura, 'UBICACION DE MEDIDOR : ');
+
+                doc.setFontSize(8);
+                doc.text(169, altura, 'E');
+                doc.setFontSize(15);
+                doc.text(169, altura + 1, String(obj_data.ubicacion_medidor_externo));
+                doc.rect(165, altura - 3, 10, 5)
+
+                doc.setFontSize(8);
+                doc.text(181, altura, 'I');
+                doc.setFontSize(15);
+                doc.text(181, altura + 1, String(obj_data.ubicacion_medidor_interno));
+                doc.setFontSize(8);
+                doc.rect(177, altura - 3, 10, 5)
+
+                altura = altura + 6;
+                doc.text(15, altura + 1, '1. DATOS DEL CLIENTE');
+                doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+                altura = altura + 8;
+                doc.text(10, altura, 'Nombre del Cliente : ' + String(obj_data.nombre_cliente));
+                altura = altura + 4;
+                doc.text(10, altura, 'Direccion del Suministro : ' + String(obj_data.direccion_suministro));
+                altura = altura + 4;
+                doc.text(10, altura, 'Distrito  : ' + String(obj_data.distrito));
+                altura = altura + 6;
+                doc.text(15, altura + 1, '2. DATOS DEL PERSONAL DE CALIDDA O CONTRATISTA ENCARGADA');
+                doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+                altura = altura + 8;
+                doc.text(10, altura, 'Nombre : ' + String(obj_data.nombre_personal));
+                doc.text(140, altura, 'DNI : ' + String(obj_data.dni_personal));
+                altura = altura + 6;
+                doc.text(15, altura + 1, '3. INFORMACIÓN');
+                doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+                altura = altura + 10;
+                doc.setFontType("bold");
+                doc.text(10, altura, 'INFORMACION PARTICULAR ');
+                doc.text(120, altura, 'RESULTADO DEL CIERRE DE SERVICIO ');
+                altura = altura + 6;
+                doc.setFontType("normal");
+                doc.text(10, altura, 'Lectura de Cierre de Servicio :' + String(obj_data.lectura_cierre));
+                doc.text(120, altura, 'Cierre Ejecutado');
+                doc.text(171, altura, String(obj_data.resultado_cierre_ejecutado));
+                doc.rect(167, altura - 3, 10, 5)
+
+                doc.text(120, 108, 'Cliente Ausente');
+                doc.text(171, 108, String(obj_data.resultado_cierre_ausente));
+                doc.rect(167, 108 - 3, 10, 5)
+
+                doc.text(120, 114, 'Impide acceso');
+                doc.text(171, 114, String(obj_data.resultado_cierre_acceso));
+                doc.rect(167, 114 - 3, 10, 5)
+
+                doc.text(120, 120, 'Resistencia a la Suspension');
+                doc.text(171, 120, String(obj_data.resultado_cierre_resistencia));
+                doc.rect(167, 120 - 3, 10, 5)
+
+                altura = altura + 10;
+                doc.setFontType("bold");
+                doc.text(10, altura, 'MOTIVO DEL CIERRE DEL SERVICIO ');
+                doc.setFontType("normal");
+                altura = altura + 6;
+                doc.text(10, altura, 'Deuda Pendiente');
+                doc.text(49, altura, String(obj_data.motivo_cierre_deuda));
+                doc.rect(45, altura - 3, 10, 5)
+
+                doc.text(70, altura, 'Fuga de Gas');
+                doc.text(99, altura, String(obj_data.motivo_cierre_fuga_gas));
+                doc.rect(95, altura - 3, 10, 5)
+
+                altura = altura + 6;
+                doc.text(10, altura, 'A pedido del cliente');
+                doc.text(49, altura, String(obj_data.motivo_cierre_pedido_cliente));
+                doc.rect(45, altura - 3, 10, 5)
+
+                doc.text(70, altura, 'Seguridad');
+                doc.text(99, altura, String(obj_data.motivo_cierre_seguridad));
+                doc.rect(95, altura - 3, 10, 5)
+
+                altura = altura + 10;
+                doc.text(15, altura + 1, '4. OBSERVACIONES');
+                doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+                altura = altura + 10;
+                var splitTitle = doc.splitTextToSize(String(obj_data.observaciones), 180);
+                doc.text(10, altura, splitTitle);
+                altura = altura + 30;
+                doc.setFontType("bold");
+                doc.text(10, altura, 'PARA PODER HACER EFECTIVA LA RECONEXION DEL SERVICIO ES NECESARIO HACER EFECTIVO EL PAGO DE TODAS');
+                doc.text(10, altura + 2, 'LAS DEUDAS PENDIENTES.');
+                altura = altura + 6;
+                doc.text(10, altura, 'PARA MAYOR INFORMACIÓN PUEDE CONTACTARNOS A TRAVES DE LA LINEA DEL SERVICIO AL CLIENTE 64-9000');
+                altura = altura + 6;
+                doc.setFontSize(7);
+                doc.text(10, altura, 'Este formato solo puede ser empleado por el personal de Calidda y sus contratistas para los fines indicados, esta terminantemente ');
+                doc.text(10, altura + 2, 'prohibido su uso por personal no autorizado.');
+                altura = altura + 20;
+                doc.setFontType("normal");
+
+                doc.rect(75, altura - 8, 50, 6) //---dibujando un rectangulo
+                doc.text(83, altura - 4, 'Cálidda - Representante');
+
+                doc.rect(75, altura - 2, 50, 38) //---dibujando un rectangulo
+
+                var generarPDF = function () {
+                    /*var string = doc.output('datauristring');
+                    var iframe = "<iframe width='100%' height='100%' src='" + string + "'></iframe>";
+                    var x = window.open();
+                    x.document.open();
+                    x.document.write(iframe);
+                    x.document.close();*/
+                    var fecha = obj_data.fecha.split('/');
+                    fecha = fecha[0] + fecha[1] + fecha[2];
+                    setTimeout(function () {
+                        doc.save(obj_data.cliente_suministro + '_' + fecha + '_' + getCodUniq() + '.pdf');
+                        q.resolve('success');
+                        //var blob = doc.output("blob");
+                        //var blobURL = URL.createObjectURL(blob);
+                        //var downloadLink = document.getElementById('pdf-download-link');
+                        //downloadLink.href = blobURL;
+
+                    }, 0);
+                }
+
+                var generarImagen_4 = function () {
+                    //PRUEBA RUTA
+                    var imgData4 = String(obj_data.ruta_foto_4)
+                    //var imgData4 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                    var img4 = new Image;
+                    img4.onload = function () {
+
+                        doc.text(90, 200, 'FOTO DEL ACTA.');
+                        doc.addImage(this, 'JPEG', 60, 210, 80, 70)
+
+                        generarPDF();
+                    };
+                    img4.crossOrigin = "";  // for demo as we are at different origin than image
+                    img4.src = imgData4;  // some random imgur image
+                }
+
+                var generarImagen_3 = function () {
+                    // prueba
+                    var imgData3 = String(obj_data.ruta_foto_3)
+                    //var imgData3 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                    var img3 = new Image;
+                    img3.onload = function () {
+                        doc.addImage(this, 'JPEG', 60, 110, 80, 70)
+
+                        generarPDF();
+                    };
+                    img3.crossOrigin = "";  // for demo as we are at different origin than image
+                    img3.src = imgData3;  // some random imgur image
+                }
+
+                var generarImagen_2 = function () {
+                    var imgData2 = String(obj_data.ruta_foto_2)
+                    //var imgData2 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                    var img2 = new Image;
+                    img2.onload = function () {
+                        doc.addPage()
+                        doc.text(90, 22, 'FOTOS DEL CORTE.');
+                        doc.addImage(this, 'JPEG', 60, 32, 80, 70)
+                        generarImagen_3();
+
+                    };
+                    img2.crossOrigin = "";  // for demo as we are at different origin than image
+                    img2.src = imgData2;  // some random imgur image
+                }
+                        
+                var imgData = String(obj_data.ruta_foto_1)
+                //var imgData = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                var img = new Image;
+                img.onload = function () {
+                    doc.addImage(this, 'JPEG', 80, 206, 40, 30);
+                    generarPDF();
+                };
+                img.crossOrigin = "";  // for demo as we are at different origin than image
+                img.src = imgData;  // some random imgur image
+
+                altura = altura + 32;
+                doc.text(95, 238 + 2, 'Firma.');
+            }
+
+           else if (obj_data.id_TipoServicio == 4 || obj_data.id_TipoServicio == '4') // SERVICIO DE RECONEXIONES
+            {
+                var doc = new jsPDF();
+               var altura = 25;
+               var imgLogo = "../Content/Imagen/logoActas.jpeg";
+
+               var cuerpoActa = function () {     
+                    //doc.addImage(imgLogo, 'JPEG', 8, 2, 60, 25)
+                    doc.setFontSize(7);
+                    //doc.text(40, 8, 'Contratista al servicio de :');
+                    doc.setFontSize(7);
+                    doc.setFont("courier");
+                    doc.setFontType("bold");
+                    doc.text(80, 10, 'Gas Natural de Lima y Callao S.A');
+                    doc.setFontType("normal");
+                    doc.text(80, 14, 'Calle Morelli Nro. 150 Urb. San Borja');
+                    doc.text(80, 18, '(Torre 2 CC la Rambla) Lima - Lima - San Borja');
+
+                    doc.setFontSize(12);
+                    doc.setFontType("bold");
+                    doc.text(71, altura, 'ORDEN DE RECONEXIÓN DEL SERVICIO');
+                    altura = altura + 6;
+                    doc.setFontSize(7);
+                    doc.setFontType("normal");
+                    doc.text(10, altura, 'FECHA : ' + String(obj_data.fecha));
+                    doc.text(80, altura, 'HORA : ' + String(obj_data.hora));
+                    doc.text(130, altura, 'CLIENTE N° : ' + String(obj_data.cliente_suministro));
+                    altura = altura + 4;
+                    doc.text(10, altura, 'INSTALACIÓN : ' + String(obj_data.instalacion));
+                    doc.text(80, altura, 'MEDIDOR N° : ' + String(obj_data.medidor));
+                    doc.text(130, altura, 'UBICACIÓN DE MEDIDOR : ');
+
+                    doc.setFontSize(8);
+                    doc.text(169, altura, 'E');
+                    doc.setFontSize(15);
+                    doc.text(169, altura + 1, String(obj_data.ubicacion_medidor_externo));
+                    doc.rect(165, altura - 3, 10, 5)
+
+                    doc.setFontSize(8);
+                    doc.text(181, altura, 'I');
+                    doc.setFontSize(15);
+                    doc.text(181, altura + 1, String(obj_data.ubicacion_medidor_interno));
+                    doc.setFontSize(8);
+                    doc.rect(177, altura - 3, 10, 5)
+                    altura = altura + 6;
+                    doc.text(15, altura + 1, '1. DATOS DEL CLIENTE');
+                   doc.rect(8, altura - 2, 195, 5) //---dibujando un rectangulo
+                    altura = altura + 8;
+                    doc.text(10, altura, 'Nombre del Cliente : ' + String(obj_data.nombre_cliente));
+                    altura = altura + 4;
+                    doc.text(10, altura, 'Dirección del Suministro : ' + String(obj_data.direccion_suministro));
+                    altura = altura + 4;
+                    doc.text(10, altura, 'Distrito  : ' + String(obj_data.distrito));
+                    altura = altura + 6;
+                    doc.text(15, altura + 1, '2. DATOS DEL PERSONAL DE CALIDDA O CONTRATISTA ENCARGADO');
+                    doc.rect(8, altura - 2, 195, 5) //---dibujando un rectangulo
+                    altura = altura + 8;
+                    doc.text(10, altura, 'Nombre : ' + String(obj_data.nombre_personal));
+                    doc.text(140, altura, 'DNI : ' + String(obj_data.dni_personal));
+                    altura = altura + 6;
+                    doc.text(15, altura + 1, '3. DECLARACIÓN');
+                   doc.rect(8, altura - 2, 195, 5) //---dibujando un rectangulo
+                    altura = altura + 7;
+                    doc.text(10, altura, 'Quien suscribe la presente Orden de Reconexión del Servicio declará bájo juramento y responsabilidad que las');
+                    altura = altura + 4;
+                    doc.text(10, altura, 'instalaciones internas y Equipos del predio ubicado en la dirección detallada precedentemente se encuentran en');
+                    altura = altura + 4;
+                    doc.text(10, altura, 'condiciones seguras para proceder a la Reconexión del suministro de Gas Natural. Asi mismo, declara que dichas');
+                    altura = altura + 4;
+                    doc.text(10, altura, 'instalaciones internas y Equipos no han sido modificados y/o manipulados desde su Habilitación o ultima Reconexión');
+                    altura = altura + 4;
+                   doc.text(10, altura, 'del servicio de distribucion de Gas Natural y que la información que se detalla a continuación es veraz.');
+                   ///----- ....modif..
+                       altura = altura + 6;
+                       doc.text(10, altura, 'En dicho sentido, el usuario quien suscribe la presente, otorga consentimiento expreso a Cálidda para ejecutar');
+                       altura = altura + 4;
+                       doc.text(10, altura, 'la reconexiónn del servicio.');
+                       altura = altura + 6;
+                   ///-----.....modif..
+                    doc.text(10, altura, 'Cálidda no sera responsable por los daños y perjuicios que se generen  o puedan generar en el incumplimiento de');
+                    altura = altura + 4;
+                    doc.text(10, altura, 'la Presente Declaración Jurada.');
+
+                    altura = altura + 6;
+                    doc.text(15, altura + 1, '4. DATOS DE LA VISITA');
+                    doc.rect(8, altura - 2, 195, 5) //---dibujando un rectangulo
+                    altura = altura + 8;
+                    doc.setFontType("bold");
+                    doc.text(10, altura, 'Motivo de Reconexión'); doc.setFontType("normal");
+                    doc.text(50, altura, '1.Deuda'); doc.text(65.5, altura, String(obj_data.motivo_deuda)); doc.rect(64, altura - 3, 5, 4);
+                    doc.text(84, altura, '2.APC'); doc.text(99.5, altura, String(obj_data.motivo_apc)); doc.rect(98, altura - 3, 5, 4);
+                    doc.text(118, altura, '3.TÉCNICO'); doc.text(136.5, altura, String(obj_data.motivo_tecnico)); doc.rect(135, altura - 3, 5, 4);
+                    doc.text(145, altura, '4.OTROS'); doc.text(161.5, altura, String(obj_data.motivo_otros)); doc.rect(160, altura - 3, 5, 4);
+
+                    altura = altura + 6;
+                    doc.setFontType("bold");
+                    doc.text(10, altura, 'RECONEXIÓN EXITOSA'); doc.text(51.5, altura, String(obj_data.recone_exitosa)); doc.rect(50, altura - 3, 5, 4);
+                    doc.setFontType("normal"); doc.text(62, altura, 'Lectura '); doc.text(76, altura, String(obj_data.lectura_cierre));
+                    altura = altura + 6;
+                    doc.text(10, altura, 'Artefactos reconectados');
+                    altura = altura + 5;
+                    doc.text(10, altura, 'Cocina'); doc.text(31.5, altura, String(obj_data.artefac_cocina)); doc.rect(30, altura - 3, 5, 4);
+                    doc.text(50, altura, 'Terma'); doc.text(71.5, altura, String(obj_data.artefac_terma)); doc.rect(70, altura - 3, 5, 4);
+                    doc.text(98, altura, 'Secadora'); doc.text(121.5, altura, String(obj_data.artefac_secadora)); doc.rect(120, altura - 3, 5, 4);
+                    doc.text(145, altura, 'Estufa'); doc.text(161.5, altura, String(obj_data.artefac_estufa)); doc.rect(160, altura - 3, 5, 4);
+                    altura = altura + 6;
+                    doc.setFontType("bold");
+                    doc.text(10, altura, 'RECONEXIÓN INFRUCTUOSA'); doc.text(51.5, altura, String(obj_data.recone_infrutuosa)); doc.rect(50, altura - 3, 5, 4);
+                    altura = altura + 6;
+                   doc.text(10, altura, 'Motivo del Impedimento'); doc.setFontType("normal");
+                    altura = altura + 6;
+                    doc.text(10, altura, 'Cliente Ausente'); doc.text(51.5, altura, String(obj_data.motivo_cliente_ausente)); doc.rect(50, altura - 3, 5, 4); doc.text(100, altura, 'Primera Visita de Reconexión'); doc.text(151.5, altura, String(obj_data.primera_visita_recone)); doc.rect(150, altura - 3, 5, 4);
+                    altura = altura + 5;
+                    doc.text(10, altura, 'Cliente Impide Acceso'); doc.text(51.5, altura, String(obj_data.motivo_cliente_impide)); doc.rect(50, altura - 3, 5, 4); doc.text(100, altura, 'Próxima Visita de Reconexión');
+                    altura = altura + 5;
+                    doc.text(10, altura, 'Otros'); doc.text(99.5, altura, String(obj_data.proxima_visita_fecha_check)); doc.rect(98, altura - 3, 5, 4); doc.text(105, altura, 'Fecha : ' + String(obj_data.proxima_visita_fecha)); doc.text(140, altura, 'Hora ' + String(obj_data.proxima_visita_hora));
+                    altura = altura + 5;
+                   doc.rect(10, altura - 3, 5, 4); doc.text(12, altura, String(obj_data.motivo_cliente_otros_check)); doc.text(16.5, altura, String(obj_data.motivo_cliente_otros));
+
+                    doc.text(99.5, altura, String(obj_data.proxima_visita_solicita)); doc.rect(98, altura - 3, 5, 4); doc.text(105, altura, 'solicite su visita al 614-9000');
+                    altura = altura + 6;
+                    doc.text(10, altura, 'ESTIMADO(A) CLIENTE(A) DE NO REALIZARSE EL SERVICIO DE RECONEXIÓN, PUEDE PROGRAMAR o REPROGRAMAR SU PRÓXIMA');
+                    altura = altura + 4;
+                    doc.text(10, altura, 'VISITA DE RECONEXIÓN DE SERVICIO ATRAVÉS DE LA LINEA DE SERVICIO AL CLIENTE 614-9000');
+
+                    altura = altura + 6;
+                    doc.text(15, altura + 1, '5. OBSERVACIONES');
+                   doc.rect(8, altura - 2, 195, 5) //---dibujando un rectangulo
+                    altura = altura + 6;
+                    var splitTitle = doc.splitTextToSize(String(obj_data.observaciones), 180);
+                    doc.text(10, altura, splitTitle);
+                    altura = altura + 10;
+                    doc.text(10, altura, 'Este formato solo puede ser empleado por el personal de Calidda y sus contratistas para los fines indicados,');
+                    doc.text(10, altura + 2, 'esta terminantemente  prohibido su uso por personal no autorizado.');
+                   altura = altura + 20; //-----  altura + 30       ----------------------AQUI SI SE QUIERE USAR LAS URL + DNI
+                    doc.setFontType("bold");
+                   ///----- ....modif..
+                   doc.rect(38, altura - 8, 60, 6) //---dibujando un rectangulo
+                   doc.text(60, altura - 4, 'Usuario');
+                   doc.rect(38, altura - 2, 60, 45) //---dibujando un rectangulo
+
+                   doc.rect(118, altura - 8, 55, 6) //---dibujando un rectangulo
+                   doc.text(126, altura - 4, 'Cálidda - Representante');
+                   doc.rect(118, altura - 2, 55, 45) //---dibujando un rectangulo
+                ///----- ....modif..
+
+                    var generarPDF = function () {
+                        var fecha = obj_data.fecha.split('/');
+                        fecha = fecha[0] + fecha[1] + fecha[2];
+                        setTimeout(function () {
+                            doc.save(obj_data.cliente_suministro + '_' + fecha + '_' + getCodUniq() + '.pdf');
+                            q.resolve('success');
+                        }, 0);
+                    }
+
+                    var generarImagen_4 = function () {
+                        //PRUEBA RUTA
+                        var imgData4 = String(obj_data.ruta_foto_4)
+                        //var imgData4 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                        var img4 = new Image;
+                        img4.onload = function () {
+
+                            doc.text(90, 200, 'FOTO DEL ACTA.');
+                            doc.addImage(this, 'JPEG', 60, 210, 80, 70)
+
+                            generarPDF();
+                        };
+                        img4.crossOrigin = "";  // for demo as we are at different origin than image
+                        img4.src = imgData4;  // some random imgur image
+                    }
+
+                    var generarImagen_3 = function () {
+                        // prueba
+                        var imgData3 = String(obj_data.ruta_foto_3)
+                        //var imgData3 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                        var img3 = new Image;
+                        img3.onload = function () {
+                            doc.addImage(this, 'JPEG', 60, 110, 80, 70)
+
+                            generarPDF();
+                        };
+                        img3.crossOrigin = "";  // for demo as we are at different origin than image
+                        img3.src = imgData3;  // some random imgur image
+                    }
+
+                    var generarImagen_2 = function () {
+                        var imgData2 = String(obj_data.ruta_foto_2)
+                        //var imgData2 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                        var img2 = new Image;
+                        img2.onload = function () {
+                            doc.addImage(this, 'JPEG', 47, 236, 40, 30);
+                            doc.text(63, 270, 'Firma.');
+             
+                            doc.text(40, 274, String(obj_data.nombre_usuario));
+                            doc.text(40, 277, String(obj_data.nroDoc_usuario));
+
+                            generarPDF();
+                        };
+                        img2.crossOrigin = "";  // for demo as we are at different origin than image
+                        img2.src = imgData2;  // some random imgur image
+                    }
+
+                   var imgData = String(obj_data.ruta_foto_1)
+                   //var imgData = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                   var img = new Image;
+                   ///----- ....modif..
+                   img.onload = function () {
+                       doc.addImage(this, 'JPEG', 125, 236, 40, 30);
+                       generarImagen_2();
+                   };
+                   img.crossOrigin = "";
+                   img.src = imgData;  // some random imgur image
+
+                   altura = altura + 32;
+                   doc.text(140, 270, 'Firma.');
+                  ///----- ....modif..
+
+               }
+ 
+               var img = new Image;
+               ///---doc.addImage( posicion, altura, 40, 30)
+               img.onload = function () {
+                   doc.addImage(this, 'JPEG', 8, 2, 60, 25);
+                   cuerpoActa();
+               };
+               img.crossOrigin = "";
+               img.src = imgLogo;  // some random imgur image
+
+            }
+
+           return q.promise;
+        }
+                       
+        $scope.getPdf_2 = function (obj_data) {
+            var q = $q.defer();
+            var doc = new jsPDF();
+            var altura = 25;
+            var imgLogo = '';
+            //doc.addImage(imgLogo, 'JPEG', 10, 4, 60, 25)
+            doc.setFontSize(7);
+            doc.text(40, 8, 'Contratista al servicio de :');
+            doc.setFontSize(7);
+            doc.setFont("courier");
+            doc.setFontType("bold");
+            doc.text(80, 10, 'Gas Natural de Lima y Callao S.A');
+            doc.setFontType("normal");
+            doc.text(80, 14, 'Calle Morelli Nro. 150 Urb. San Borja');
+            doc.text(80, 18, '(Torre 2 CC la Rambla) Lima - Lima - San Borja');
+
+            doc.setFontSize(12);
+            doc.setFontType("bold");
+            doc.text(65, altura, 'ORDEN DE RECONEXIÓN DEL SERVICIO');
+            altura = altura + 6;
+            doc.setFontSize(7);
+            doc.setFontType("normal");
+            doc.text(10, altura, 'FECHA : ' + String(obj_data.fecha));
+            doc.text(80, altura, 'HORA : ' + String(obj_data.hora));
+            doc.text(130, altura, 'CLIENTE N° : ' + String(obj_data.cliente_suministro));
+            altura = altura + 4;
+            doc.text(10, altura, 'INSTALACION : ' + String(obj_data.instalacion));
+            doc.text(80, altura, 'MEDIDOR N° : ' + String(obj_data.medidor));
+            doc.text(130, altura, 'UBICACION DE MEDIDOR : ');
+
+            doc.setFontSize(8);
+            doc.text(169, altura, 'E');
+            doc.setFontSize(15);
+            doc.text(169, altura + 1, String(obj_data.ubicacion_medidor_externo));
+            doc.rect(165, altura - 3, 10, 5)
+
+            doc.setFontSize(8);
+            doc.text(181, altura, 'I');
+            doc.setFontSize(15);
+            doc.text(181, altura + 1, String(obj_data.ubicacion_medidor_interno));
+            doc.setFontSize(8);
+            doc.rect(177, altura - 3, 10, 5)
+
+ 
+            altura = altura + 6;
+            doc.text(15, altura + 1, '1. DATOS DEL CLIENTE');
+            doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+            altura = altura + 8;
+            doc.text(10, altura, 'Nombre del Cliente : ' + String(obj_data.nombre_cliente));
+            altura = altura + 4;
+            doc.text(10, altura, 'Direccion del Suministro : ' + String(obj_data.direccion_suministro));
+            altura = altura + 4;
+            doc.text(10, altura, 'Distrito  : ' + String(obj_data.distrito));
+            altura = altura + 6;
+            doc.text(15, altura + 1, '2. DATOS DEL PERSONAL DE CALIDDA O CONTRATISTA ENCARGADO');
+            doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+            altura = altura + 8;
+            doc.text(10, altura, 'Nombre : ' + String(obj_data.nombre_personal));
+            doc.text(140, altura, 'DNI : ' + String(obj_data.dni_personal));
+            altura = altura + 6;
+            doc.text(15, altura + 1, '3. DECLARACIÓN');
+            doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+            altura = altura + 7;
+            doc.text(10, altura, 'Quien suscribe la presente Orden de Reconexión del Servicio declará bájo juramento y responsabilidad que las');
+            altura = altura + 4;
+            doc.text(10, altura, 'instalaciones internas y Equipos del predio ubicado en la dirección detallada precedentemente se encuentran en');
+            altura = altura + 4;
+            doc.text(10, altura, 'condiciones seguras para proceder a la Reconexión del suministro de Gas Natural. Asi mismo, declara que dichas');
+            altura = altura + 4;
+            doc.text(10, altura, 'instalaciones internas y Equipos no han sido modificados y/o manipulados desde su Habilitación o ultima Reconexión');
+            altura = altura + 4;
+            doc.text(10, altura, 'del servicio de distribucion de Gas Natural y que la información que se detalla a continuación es veraz.');
+            altura = altura + 6;
+            doc.text(10, altura, 'Cálidda no sera responsable por los daños y perjuicios que se generen  o puedan generar en el incumplimiento de');
+            altura = altura + 4;
+            doc.text(10, altura, 'la Presente Declaración Jurada.');
+            
+            altura = altura + 6;
+            doc.text(15, altura + 1, '4. DATOS DE LA VISITA');
+            doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+            altura = altura + 8;
+            doc.setFontType("bold");
+            doc.text(10, altura, 'Motivo de Reconexión'); doc.setFontType("normal");
+            doc.text(50, altura, '1.Deuda'); doc.text(65.5, altura, String(obj_data.motivo_deuda));   doc.rect(64, altura - 3, 5, 4);
+            doc.text(84, altura, '2.APC'); doc.text(99.5, altura, String(obj_data.motivo_apc));  doc.rect(98, altura - 3, 5, 4);
+            doc.text(118, altura, '3.TECNICO'); doc.text(136.5, altura, String(obj_data.motivo_tecnico));  doc.rect(135, altura - 3, 5, 4);
+            doc.text(145, altura, '4.OTROS'); doc.text(161.5, altura, String(obj_data.motivo_otros));  doc.rect(160, altura - 3, 5, 4);
+
+            altura = altura + 6;
+            doc.setFontType("bold");
+            doc.text(10, altura, 'RECONEXIÓN EXITOSA'); doc.text(51.5, altura, String(obj_data.recone_exitosa)); doc.rect(50, altura - 3, 5, 4);
+            doc.setFontType("normal"); doc.text(62, altura, 'Lectura '); doc.text(76, altura, String(obj_data.lectura_cierre));  
+            altura = altura + 6;
+            doc.text(10, altura, 'Artefactos reconectados');
+            altura = altura + 5;
+            doc.text(10, altura, 'Cocina'); doc.text(31.5, altura, String(obj_data.artefac_cocina));  doc.rect(30, altura - 3, 5, 4);
+            doc.text(50, altura, 'Terma'); doc.text(71.5, altura, String(obj_data.artefac_terma)); doc.rect(70, altura - 3, 5, 4);
+            doc.text(98, altura, 'Secadora'); doc.text(121.5, altura, String(obj_data.artefac_secadora)); doc.rect(120, altura - 3, 5, 4);
+            doc.text(145, altura, 'Estufa'); doc.text(161.5, altura, String(obj_data.artefac_estufa)); doc.rect(160, altura - 3, 5, 4);
+            altura = altura + 6;
+            doc.setFontType("bold");
+            doc.text(10, altura, 'RECONEXIÓN INFRUCTUOSA'); doc.text(51.5, altura, String(obj_data.recone_infrutuosa));  doc.rect(50, altura - 3, 5, 4);  
+            altura = altura + 6;
+            doc.text(10, altura, 'Motivo del Impedimento'); doc.setFontType("normal");
+            altura = altura + 6;
+            doc.text(10, altura, 'Cliente Ausente'); doc.text(51.5, altura, String(obj_data.motivo_cliente_ausente)); doc.rect(50, altura - 3, 5, 4); doc.text(100, altura, 'Primera Visita de Reconexión'); doc.text(151.5, altura, String(obj_data.primera_visita_recone));  doc.rect(150, altura - 3, 5, 4);
+            altura = altura + 5;
+            doc.text(10, altura, 'Cliente Impide Acceso'); doc.text(51.5, altura, String(obj_data.motivo_cliente_impide)); doc.rect(50, altura - 3, 5, 4); doc.text(100, altura, 'Proxima Visita de Reconexión');
+            altura = altura + 5;
+            doc.text(10, altura, 'Otros'); doc.text(99.5, altura, String(obj_data.proxima_visita_fecha_check)); doc.rect(98, altura - 3, 5, 4); doc.text(105, altura, 'Fecha : ' + String(obj_data.proxima_visita_fecha)); doc.text(140, altura, 'Hora ' + String(obj_data.proxima_visita_hora));     
+            altura = altura + 5;
+            doc.text(10, altura, String(obj_data.motivo_cliente_otros));    doc.text(99.5, altura, String(obj_data.proxima_visita_solicita));   doc.rect(98, altura - 3, 5, 4); doc.text(105, altura, 'solicite su visita al 614-9000');
+            altura = altura + 6;         
+            doc.text(10, altura, 'ESTIMADO(A) CLIENTE(A) DE NO REALIZARSE EL SERVICIO DE RECONEXIÓN, PUEDE PROGRAMAR o REPROGRAMAR SU PRÓXIMA');
+            altura = altura + 4;
+            doc.text(10, altura, 'VISITA DE RECONEXIÓN DE SERVICIO ATRAVÉS DE LA LINEA DE SERVICIO AL CLIENTE 614-9000');
+
+            altura = altura + 6;
+            doc.text(15, altura + 1, '4. OBSERVACIONES');
+            doc.rect(8, altura - 2, 180, 5) //---dibujando un rectangulo
+            altura = altura + 6;
+            var splitTitle = doc.splitTextToSize(String(obj_data.observaciones), 180);
+            doc.text(10, altura, splitTitle);
+            altura = altura + 10;
+            doc.text(10, altura, 'Este formato solo puede ser empleado por el personal de Calidda y sus contratistas para los fines indicados,');
+            doc.text(10, altura + 2, 'esta terminantemente  prohibido su uso por personal no autorizado.');
+            altura = altura + 20;
+            doc.setFontType("bold");
+
+            doc.rect(40, altura - 8, 50, 6) //---dibujando un rectangulo
+            doc.text(60, altura - 4, 'Usuario');
+            doc.rect(40, altura - 2, 50, 38) //---dibujando un rectangulo
+
+
+            doc.rect(120, altura - 8, 50, 6) //---dibujando un rectangulo
+            doc.text(128, altura - 4, 'Cálidda - Representante');
+            doc.rect(120, altura - 2, 50, 38) //---dibujando un rectangulo
+
+            var generarPDF = function () {
+                var fecha = obj_data.fecha.split('/');
+                fecha = fecha[0] + fecha[1] + fecha[2];
+                setTimeout(function () {
+                    doc.save(obj_data.cliente_suministro + '_' + fecha + '_' + getCodUniq() + '.pdf');
+                    q.resolve('success');
+                }, 0);
+            }
+
+            var generarImagen_4 = function () {
+                //PRUEBA RUTA
+                var imgData4 = String(obj_data.ruta_foto_4)
+                //var imgData4 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                var img4 = new Image;
+                img4.onload = function () {
+
+                    doc.text(90, 200, 'FOTO DEL ACTA.');
+                    doc.addImage(this, 'JPEG', 60, 210, 80, 70)
+
+                    generarPDF();
+                };
+                img4.crossOrigin = "";  // for demo as we are at different origin than image
+                img4.src = imgData4;  // some random imgur image
+            }
+
+            var generarImagen_3 = function () {
+                // prueba
+                var imgData3 = String(obj_data.ruta_foto_3)
+                //var imgData3 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                var img3 = new Image;
+                img3.onload = function () {
+                    doc.addImage(this, 'JPEG', 60, 110, 80, 70)
+
+                    generarPDF();
+                };
+                img3.crossOrigin = "";  // for demo as we are at different origin than image
+                img3.src = imgData3;  // some random imgur image
+            }
+
+            var generarImagen_2 = function () {
+                var imgData2 = String(obj_data.ruta_foto_2)
+                //var imgData2 = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+                var img2 = new Image;
+                img2.onload = function () {
+                    doc.addImage(this, 'JPEG', 45, 226, 40, 30);
+                    doc.text(60, 260, 'Firma.');
+                    generarPDF();
+                };
+                img2.crossOrigin = "";  // for demo as we are at different origin than image
+                img2.src = imgData2;  // some random imgur image
+            }
+
+            var imgData = String(obj_data.ruta_foto_1)
+            //var imgData = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+            var img = new Image;
+
+            ///---doc.addImage( posicion, altura, 40, 30)
+            img.onload = function () {
+                doc.addImage(this, 'JPEG', 125, 226, 40, 30);
+                generarImagen_2();
+                //generarPDF();
+            };
+            img.crossOrigin = "";   
+            img.src = imgData;  // some random imgur image
+
+            altura = altura + 32;
+            doc.text(140, 260, 'Firma.');
+
+            return q.promise;
+
+        }
+        
+        $scope.crear_pdf_inspecciones = function () {
+            $('.sige-load').show();
+
+            var variables = {
+                method: 'POST',
+                url: '../GeneracionActas/get_generacionPdf_inspecciones',
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                data: {
+                    id_inspeccion: 1, 
+                }
+            }
+            $http(variables)
+                .success(function (data) {
+                    $('.sige-load').hide();
+
+                    if (data.length > 0) {
+                        $scope.getPdf_3(data)
+                    } else {
+                        alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+                    }
+                })
+                .error(function () {
+                    $('.sige-load').hide();
+                    alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+
+                });
+        }
+        
+        $scope.getPdf_3 = function (obj_data) {
+
+            var q = $q.defer();
+            var doc = new jsPDF();
+            var altura = 12;
+            var imgLogo = '';
+            //doc.addImage(imgLogo, 'JPEG', 10, 4, 60, 25)
+            doc.setFontSize(13);
+            doc.setFont("courier");
+            doc.setFontType("bold");
+            doc.text(80, altura, 'CONTROL PREVENTIVO');
+            doc.setFontType("normal");
+            doc.setFontSize(6); 
+            doc.text(165, altura, 'Código: CO-FO-9122-SSOMA-021');
+            altura = altura + 3;  
+            doc.setFontType("normal");
+            doc.setFontSize(7); 
+            doc.text(90, altura, 'Lista de autochequeo'); doc.setFontSize(6); doc.text(165, altura, 'Rev.: 00');   
+            altura = altura + 3;   
+            doc.setFontSize(7);
+            doc.text(90, altura, 'Servicios Auxiliares'); doc.setFontSize(6); doc.text(165, altura, 'Fecha: Mayo 2019');
+            altura = altura + 4;  
+            doc.setFontSize(7);
+            doc.setFontType("bold");
+            doc.text(6, altura, 'OPERARIO :'); doc.text(90, altura, 'AREA :');
+            altura = altura + 4;  
+            doc.text(6, altura, 'EMPRESA :'); doc.text(90, altura, 'FECHA :'); doc.text(150, altura, 'HORA :');
+            altura = altura + 4;  
+            doc.setFontSize(9);
+            doc.text(60, altura, 'Campo a verificar al inicio de la jornada (en la base)');
+            altura = altura + 6;  
+            doc.setFontSize(6);
+
+            //-----lado izquierdo---------------------
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+
+            doc.rect(5, altura - 3, 59, 8, 'FD');
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220,)
+            doc.rect(64, altura - 3, 30, 4, 'FD');
+            doc.text(65, altura, 'Disponible     ESTADO');
+            //-----lado Derecho---------------------
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(98, altura - 3, 75, 8, 'FD');
+
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(173, altura - 3, 30, 4,'FD');
+            doc.text(174, altura, 'Disponible     ESTADO');
+
+            doc.setFontSize(8);
+            doc.text(12, altura, 'PROTECCIONES INDIVIDUALES Y');
+            altura = altura + 2; 
+            doc.text(120, altura, 'MEDIOS DE TRABAJO');
+            altura = altura + 2; 
+            doc.text(25, altura, 'ESPECIFICAS');
+                        //-----lado izquierdo---------------------
+            doc.text(65, altura, 'SI'); doc.rect(64, altura - 3, 5, 4);
+            doc.text(70, altura, 'NO'); doc.rect(69, altura - 3, 5, 4);
+            doc.text(75, altura, 'NA'); doc.rect(74, altura - 3, 5, 4);
+            doc.text(80, altura, 'B'); doc.rect(79, altura - 3, 5, 4);
+            doc.text(85, altura, 'M'); doc.rect(84, altura - 3, 5, 4);
+            doc.text(90, altura, 'NA'); doc.rect(89, altura - 3, 5, 4);
+            //-----lado Derecho---------------------
+            doc.text(174, altura, 'SI'); doc.rect(173, altura - 3, 5, 4);
+            doc.text(179, altura, 'NO'); doc.rect(178, altura - 3, 5, 4);
+            doc.text(184, altura, 'NA'); doc.rect(183, altura - 3, 5, 4);
+            doc.text(189, altura, 'B'); doc.rect(188, altura - 3, 5, 4);
+            doc.text(194, altura, 'M'); doc.rect(193, altura - 3, 5, 4);
+            doc.text(199, altura, 'NA'); doc.rect(198, altura - 3, 5, 4); 
+            doc.setFontSize(7);
+            doc.setFontType("normal");
+ 
+            for (item of obj_data) {
+                if (item.Lado == 1) {
+                    if (item.id_CheckList > 1) {
+                        altura = altura + 4;
+                        doc.text(6, altura, item.descripcion); doc.rect(5, altura - 3, 59, 4);
+                        doc.text(65, altura, item.valor_SI); doc.rect(64, altura - 3, 5, 4);
+                        doc.text(70, altura, item.valor_NO); doc.rect(69, altura - 3, 5, 4);
+                        doc.text(75, altura, item.valor_NA); doc.rect(74, altura - 3, 5, 4);
+                        doc.text(80, altura, item.valor_B); doc.rect(79, altura - 3, 5, 4);
+                        doc.text(85, altura, item.valor_M); doc.rect(84, altura - 3, 5, 4);
+                        doc.text(90, altura, item.valor_NA2); doc.rect(89, altura - 3, 5, 4);
+                    }
+                }
+            }
+ 
+            altura = 40; 
+            for (row of obj_data) {    
+                if (row.Lado == 2) {
+                    if (row.id_CheckList > 31) {
+                        altura = altura + 4;
+                        doc.text(100, altura, row.descripcion); doc.rect(98, altura - 3, 75, 4);
+                        doc.text(174, altura, row.valor_SI); doc.rect(173, altura - 3, 5, 4);
+                        doc.text(179, altura, row.valor_NO); doc.rect(178, altura - 3, 5, 4);
+                        doc.text(184, altura, row.valor_NA); doc.rect(183, altura - 3, 5, 4);
+                        doc.text(189, altura, row.valor_B); doc.rect(188, altura - 3, 5, 4);
+                        doc.text(194, altura, row.valor_M); doc.rect(193, altura - 3, 5, 4);
+                        doc.text(199, altura, row.valor_NA2); doc.rect(198, altura - 3, 5, 4);
+                    }
+                }
+            }
+
+            var generarPDF = function () {
+
+                doc.setFontType("bold");
+                doc.setFontSize(10);
+                doc.text(60, altura, 'Verificar antes del inicio de la jornada.');
+                altura = altura + 6;
+                doc.setFontType("normal");
+                doc.setFontSize(7);
+                doc.setFontType("bold");
+                doc.text(6, altura, '1. Condiciones de Zona de Trabajo (Evaluación y verificación de la zona de trabajo, Interferencia con terceros, clima del ambiente, etc.)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("bold");
+                doc.text(6, altura, '2. Comprobación de entorno de suministro');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("normal");
+                doc.text(6, altura, '- Identificación visual  (Medidor de Suministro con objetos suspendidos sobre éste, Medidor de suministros sin acceso o acceso ');
+                altura = altura + 4;
+                doc.text(6, altura, '  inseguro Medidor de Suministro Inteno; Medidor de suminsitro ubicado en Altura)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '- En caso de medidores de suministros ubicados en azoteas o altura con accesos no estandarizados, reportar el suministro ');
+                altura = altura + 4;
+                doc.text(6, altura, '  con el responsable del área, para que éste asigne el trabajo a la cuadrilla correspondiente.');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("bold");
+                doc.text(6, altura, '3. Trabajo en Altura:');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("normal");
+                doc.text(6, altura, '-  Escaleras (revisión  de  estado de peldaños, zapatas, largueros, atado correcto de la escalera al poste…)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '-  Sistema anticaída (arnés anticaídas, cuerda semiestatica, estrobo, grip, línea de vida….)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '-  Trabajo a medio tramo/vano: carro porta-escaleras, coordinar con Supervisor de Obra.');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '-  Trabajo en armario (revisión del estado de la plataforma, barandas, soportes, abrazaderas y tuercas libres de corrosión,');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '   deterioro y/o ausencias de estas)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("bold");
+                doc.text(6, altura, '4. Trabajos en Azotea ');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("normal");
+                doc.text(6, altura, '- Verificación de techo (material noble, Presencia de animales, Estructura)');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("bold");
+                doc.text(6, altura, '5. Trabajos en Fachada');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("normal");
+                doc.text(6, altura, '- Verificación de las fachadas.');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '- Verificación del tipo de anclaje.');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.text(6, altura, '- Verificación de la ausencia de instalaciones eléctricas "hechizas"');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                altura = altura + 4;
+                doc.setFontType("bold");
+                doc.text(6, altura, '6. Trabajo con desplazamiento en vehículos menores  ');
+                doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+                doc.setFontType("normal");
+                altura = altura + 8;
+
+                doc.text(20, altura + 2, 'MEDIOS DE TRABAJO');
+                doc.rect(5, altura - 3, 65, 8);
+                doc.text(77, altura, 'Ejecucion'); doc.rect(70, altura - 3, 30, 4);
+                altura = altura + 4;
+                doc.text(80, altura, 'Si/No'); doc.rect(70, altura - 3, 30, 4);
+ 
+                for (items of obj_data) {
+                    if (items.Lado == 3) {
+                        if (items.id_CheckList > 62) {
+                            altura = altura + 4;
+                            doc.text(6, altura, items.descripcion);
+                            doc.rect(5, altura - 3, 65, 4);
+                            doc.rect(70, altura - 3, 30, 4);
+                            doc.text(80, altura, items.valor_SI);
+                        }
+                    }
+                }
+
+                var string = doc.output('datauristring');
+                var iframe = "<iframe width='100%' height='100%' src='" + string + "'></iframe>";
+                var x = window.open();
+                x.document.open();
+                x.document.write(iframe);
+                x.document.close();
+            }
+
+            var generarImagen_2 = function () {
+                //var imgData2 = String(obj_data.ruta_foto_2)
+                var imgData2 = String('../content/foto/foto/1000127_1_08012019_1452452900.jpg');
+                var img2 = new Image;
+                img2.onload = function () {
+                    doc.addImage(this, 'JPEG', 150, 275, 28, 15);
+                    generarPDF();
+                };
+                img2.crossOrigin = "";  // for demo as we are at different origin than image
+                img2.src = imgData2;  // some random imgur image
+                doc.setFontType("bold");
+                doc.text(150, 293, 'Firma de trabajador');
+                doc.setFontType("normal");
+            }
+
+            altura = 156;
+            doc.setFontSize(9);
+            doc.setFontType("bold");
+            doc.text(6, 175, 'Nombre y apellidos: LANGUASCO BARRON JULIO CESAR ');
+            doc.text(137, 175, 'Firma:');
+            doc.line(6, 176.5, 148, 176.5) // horizontal line
+
+            doc.setFontSize(7);
+            doc.setFontType("normal");
+
+            var imgData = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+            var img = new Image;
+            img.onload = function () {
+                doc.addImage(this, 'JPEG', 150, 168, 28, 15);
+                generarImagen_2();
+            };
+            img.crossOrigin = "";
+            img.src = imgData;  // some random imgur image
+            altura = altura + 29;
+ 
+            return q.promise;
+
+        }
+
+        $scope.getPdf_4 = function (obj_data) {
+
+            var q = $q.defer();
+            var doc = new jsPDF();
+            var altura = 12;
+            var lados = 0;
+            var imgLogo = '';
+
+
+            //doc.addImage(imgLogo, 'JPEG', 10, 4, 60, 25)
+            doc.setFontSize(13);
+            doc.setFont("courier");
+            doc.setFontType("bold");
+            doc.text(80, altura, 'CONTROL PREVENTIVO');
+            doc.setFontType("normal");
+            doc.setFontSize(6);
+            doc.text(165, altura, 'Código: CO-FO-9122-SSOMA-021');
+            altura = altura + 3;
+            doc.setFontType("normal");
+            doc.setFontSize(7);
+            doc.text(90, altura, 'CHARLA PREOPERACIONAL'); doc.setFontSize(6); doc.text(165, altura, 'Rev.: 00');
+            altura = altura + 3;
+            doc.setFontSize(7);
+            doc.text(90, altura, 'Servicios Auxiliares'); doc.setFontSize(6); doc.text(165, altura, 'Fecha: Mayo 2019');
+            altura = altura + 8;
+            doc.setFontSize(8);
+            doc.setFontType("bold");
+            doc.text(6, altura, 'NOMBRE EMPRESA: ');
+            doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+            altura = altura + 6;
+            doc.text(6, altura, 'RESPONSABLE DE TRABAJO: ');
+            doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+            altura = altura + 6;
+            doc.text(6, altura, 'TÍTULO DEL TRABAJO: ');
+            doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+            altura = altura + 6;
+            doc.text(6, altura, 'LUGAR: '); doc.text(90, altura, 'FECHA :'); doc.text(150, altura, 'HORA :');
+            doc.line(6, altura + 1.5, 200, altura + 1.5) // horizontal line
+
+            altura = altura + 10;
+            doc.text(35, altura, 'ANTES DE REALIZAR LOS TRABAJOS ASIGNADOS VERIFICAR Y REALIZAR LO SIGUIENTE: ');  
+            doc.line(35, altura + 1.5, 160, altura + 1.5) // horizontal line
+            altura = altura + 6;
+            doc.setFontSize(7);
+            doc.text(6, altura, '¤ Charla Pre Operacional, reconociendo previamente su zona de trabajo. Identificar los peligros y evaluar los riesgos, ');
+            altura = altura + 3;
+            doc.text(6, altura, '  estableciendo las medidas de control vinculadas.');
+            altura = altura + 4;
+            doc.text(6, altura, '¤ Revisar que los EPP, herramientas y otros medios de trabajos se encuentren en buen estado de conservación.');
+
+            altura = altura + 4;
+            doc.setFontType("normal");
+            doc.text(6, altura, '* Luego de la evaluación del entorno de trabajo, marcar con una X los peligros y riesgos identificados. Anotar en el apartado');
+            altura = altura + 3;
+            doc.text(6, altura, '*  de Medidas de control, los controles correspondientes referenciando el item del riesgo identificado');
+            altura = altura + 6;
+
+            doc.setFontSize(9);
+
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(10, altura - 3, 90, 8, 'FD');
+            doc.text(32, altura + 2, 'PELIGROS IDENTIFICADOS');
+
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(110, altura - 3, 91, 8, 'FD');
+            doc.text(137, altura + 2, 'RIESGOS IDENTIFICADOS');
+            altura = altura + 4;
+
+            //------LADO IZQUIERDO ---
+            lados = altura;
+            altura = lados; 
+
+            for (var i = 0; i < 12; i++) {
+                altura = altura + 4;
+                doc.setFontSize(11);
+                doc.text(18, altura, 'X'); doc.rect(10, altura - 3, 20, 4);
+                doc.text(38, altura, String(i + 1)); doc.rect(30, altura - 3, 20, 4);
+                doc.setFontSize(7); doc.text(55, altura, 'Trasporte manual de cargas'); doc.rect(50, altura - 3, 50, 4);
+            }
+            altura = 84; 
+            for (var i = 0; i < 12; i++) {
+                altura = altura + 4;
+                doc.setFontSize(11);
+                doc.text(118, altura, 'A'); doc.rect(110, altura - 3, 20, 4);
+                doc.text(138, altura, String(i + 1)); doc.rect(130, altura - 3, 20, 4);
+                doc.setFontSize(7); doc.text(151, altura, 'Sobreexposición a radiación solar'); doc.rect(150, altura - 3, 51, 4);
+            }
+            //------LADO DERECHO ---
+            altura = altura + 8;
+            doc.setFontSize(8);
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(10, altura - 3, 90, 4, 'FD'); doc.text(10, altura, 'Otros peligros y riesgos');
+
+            lados = 0;
+            lados = altura; 
+            altura = lados; 
+
+            for (var i = 0; i < 3; i++) {
+                altura = altura + 4;
+                doc.setFontSize(11);
+                doc.text(18, altura, ''); doc.rect(10, altura - 3, 20, 4);
+                doc.text(38, altura, ''); doc.rect(30, altura - 3, 20, 4);
+                doc.setFontSize(7); doc.text(55, altura, ''); doc.rect(50, altura - 3, 50, 4);
+            }
+
+            altura = lados; 
+            for (var i = 0; i < 3; i++) {
+                altura = altura + 4;
+                doc.setFontSize(11);
+                doc.text(118, altura, ''); doc.rect(110, altura - 3, 20, 4);
+                doc.text(138, altura, ''); doc.rect(130, altura - 3, 20, 4);
+                doc.setFontSize(7); doc.text(151, altura, ''); doc.rect(150, altura - 3, 51, 4);
+            }
+
+            altura = altura + 8;
+            doc.setFontSize(8);
+
+            doc.setDrawColor(0)
+            doc.setFillColor(220, 220, 220)
+            doc.rect(10, altura - 3, 191, 4, 'FD'); 
+            doc.text(10, altura, 'Item del Riesgo'); doc.text(80, altura, 'Medidas de Control del Riesgo');  
+
+            lados = 0;
+            lados = altura; 
+ 
+            for (var i = 0; i < 11; i++) {
+                altura = altura + 4;
+                doc.setFontSize(11);
+                doc.text(21, altura, 'A'); doc.rect(10, altura - 3, 25, 4);
+                doc.setFontSize(8);
+                doc.text(38, altura, 'x--------x'); doc.rect(35, altura - 3, 166, 4);
+            }
+            //----
+            altura = altura + 8;
+ 
+            var generarPDF = function () {
+                var string = doc.output('datauristring');
+                var iframe = "<iframe width='100%' height='100%' src='" + string + "'></iframe>";
+                var x = window.open();
+                x.document.open();
+                x.document.write(iframe);
+                x.document.close(); 
+            }
+
+            //var imgData = String(obj_data.ruta_foto_1)
+            var imgData = String('../content/foto/foto/10109278_04092018_1441302710.jpg');
+            var img = new Image;
+
+            img.onload = function () {
+                doc.addImage(this, 'JPEG', 125, 226, 40, 30);
+                generarPDF();
+            };
+            img.crossOrigin = "";
+            img.src = imgData;  // some random imgur image 
+
+            altura = altura + 32;
+            doc.text(127, 260, 'Firma del trabajador.');                   
+
+            return q.promise;
+
+        }
+        
+        function getDateNow() {
+            var meses = new Array("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre");
+            var diasSemana = new Array("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado");
+            var f = new Date()
+            return diasSemana[f.getDay()] + ", " + f.getDate() + " de " + meses[f.getMonth()] + " de " + f.getFullYear();
+        };
+
+        function getDateHour() {
+            var f = new Date()
+            return f.getHours() + ':' + f.getMinutes() + ':' + f.getSeconds();
+        } 
+
+    });
+
+</script>
+
+
+<div class="panel panel-oscuro" ng-app="appActas" ng-controller="ctrlActas" ng-init="inicializando_variables();">
+    <div class="panel-heading"  style="margin-top: -14px;">
+        <h6><i class="fa fa-table fa-lg"></i> GENERACIÓN DE ACTAS </h6>
+    </div>
+    <div class="panel-body">
+        <div id="Contenedor">
+            <form class="form-inline">
+                <div class="row" style=" margin-top: -7px;">
+                    <div class="col-lg-12">
+                        <div class="well" style="background: #314b75; color: white;">
+                            <center style="margin-top: -20px;margin-bottom: -20px;">
+
+                                <div class="form-group" style="padding-left: 15px;">
+                                    <label for="cbo_servicio" style="font-size:11px; margin-top: 5px;">Servicio:</label>
+                                    <select id="cbo_servicio" class="form-control" ng-model="id_tipoServicio">
+                                        <option value=0>--[ Seleccione ]-- </option>
+                                        <option ng-repeat="item in Obj_List_Servicios" value="{{item.id_TipoServicio}}">
+                                            {{item.nombre_tiposervicio}}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="padding-left: 15px;">
+                                    <label for="id_fecha" style="font-size:11px">Fecha: </label>
+                                    <input class="form-control" style="width: 150px;" id="id_fecha" placeholder="dia/mes/año" type="text" value="@DateTime.Now.ToString("dd/MM/yyyy")" />
+                                </div>
+
+                                <div class="form-group" style="padding-left: 15px;  margin-top: 5px;">
+                                    <label for="cbo_operario" style="font-size:11px">Operario:</label>
+                                    <select id="cbo_operario" class="form-control" ng-model="id_operario">
+                                        <option value=0>--[ Todos ]-- </option>
+                                        <option ng-repeat="item in Obj_List_Operario" value="{{item.id_Operario}}">
+                                            {{item.id_Operario}} : {{item.desc_operario}}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group" style="padding-left: 15px; margin-top: 5px;">
+                                    <button class="btn btn-success"   ng-click="Listado_Cabecera_Lecturas();"><span class="glyphicon glyphicon-refresh"></span> Mostrar</button>
+                                    <button class="btn btn-primary " ng-click="descargarMasivo();"><span class="glyphicon glyphicon-download-alt"></span> PDF</button>                                    
+                                </div>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{progress}}%;" aria-valuenow="{{progress}}" aria-valuemin="0" aria-valuemax="100">{{progress | number : 2}}%</div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12">
+                <div id="Principal" class="table-responsive">
+                    <table id="tblLista" class="table  table-bordered table-responsive" border="0" cellspacing="0" cellpadding="0" style="font-size:11px">
+                        <thead style="color:#7991a5;">
+                            <tr>
+                                <th style="text-align:center">#</th>
+                                <th style="text-align:center">Suministro</th>
+                                <th style="text-align:center">Medidor</th>
+                                <th style="text-align:center">Cliente</th>
+                                <th style="text-align:center">Operario</th>
+                                <th style="text-align:center"> Descargar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in Obj_List_Cabecera" on-finish-render="ngRepeatFinished_cabecera">
+                                <td>{{$index + 1}}</td>
+                                <td style="text-align:center">{{item.cliente_suministro}}</td>
+                                <td style="text-align:center">{{item.medidor}}</td>
+                                <td>{{item.nombre_cliente}}</td>
+                                <td>{{item.nombre_personal}}</td>
+                                <td style="text-align:center"> <button class="btn btn-xs btn-primary" ng-click="getPdf(item);"><span class="glyphicon glyphicon-download-alt"></span> </button> </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
