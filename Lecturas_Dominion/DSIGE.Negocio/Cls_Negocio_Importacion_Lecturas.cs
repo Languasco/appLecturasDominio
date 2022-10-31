@@ -724,6 +724,119 @@ namespace DSIGE.Negocio
             }
         }
 
+        //----- CORTES RECONEXIONES
+
+        public object Capa_Negocio_save_temporalCargaProgramacion(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_temporalCargaProgramacion(fileLocation, usuario, idservicio, idfechaAsignacion, nombreArchivo, idOpcion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        public object Capa_Negocio_save_temporalMacroOrdenes(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_temporalMacroOrdenes(fileLocation, usuario, idservicio, idfechaAsignacion, nombreArchivo, idOpcion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+        public object Capa_Negocio_save_temporalMacroOperaciones(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_temporalMacroOperaciones(fileLocation, usuario, idservicio, idfechaAsignacion, nombreArchivo, idOpcion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+
+        public object Capa_Negocio_save_CargaProgramacion(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_CargaProgramacion(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+
+        public object Capa_Negocio_save_MacroOrdenes(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_MacroOrdenes(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+        public object Capa_Negocio_save_MacroOperaciones(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_MacroOperaciones(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+        public object Capa_Negocio_save_temporalSuministro_noCortar(string fileLocation, int usuario, int idservicio)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_save_temporalSuministroMasivo_noCortar(fileLocation, usuario, idservicio);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        public object Capa_Negocio_Agrupado_temporalSuministroMasivo_noCortar(int idServicio, int cod_usuario)
+        {
+            try
+            {
+                Cls_Dato_Importacion_Lecturas Objeto_Dato = new Cls_Dato_Importacion_Lecturas();
+                return Objeto_Dato.Capa_Dato_Agrupado_suministroMasivo_noCortar(idServicio, cod_usuario);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
 
 
     }

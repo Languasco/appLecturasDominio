@@ -595,10 +595,7 @@
             $scope.campo_opcion_Cortes = '';
 
             $scope.ModificarCortesReconexiones = function (obj_data, CampoModificar, campo_opcion) {
-
-               console.log(CampoModificar)
-               console.log(campo_opcion)
-
+ 
                 $scope.FlagLecturaCorte = false;
                 $scope.FlagCorteCodObservacion = false;
                 $scope.FlagCorteCodObservacionResultado = false;
@@ -643,16 +640,20 @@
                 txt_edit_idcorte = document.getElementById('txt_edit_idcorte');
                 txtcontratoCorte = document.getElementById('txtcontratoCorte');
                 txtmedidorCorte = document.getElementById('txtmedidorCorte');
+                txtObservacionCorte = document.getElementById('txtObservacionCorte');
 
                 txt_edit_idcorte.value = obj_data.id_Lectura;
                 txtcontratoCorte.value = obj_data.cuenta_contrato;
                 txtmedidorCorte.value = obj_data.medidor_corte;
+                txtObservacionCorte.value = obj_data.Observacion_corte;
             }
 
 
             $scope.UpdateCortesReconexiones = function () {
 
                 var codCorteLectura = document.getElementById('txt_edit_idcorte').value;
+                var txtObservacionCorte = document.getElementById('txtObservacionCorte').value;
+
                 var _DatoModificarCorte = '';
 
                 if ($scope.campo_opcion_Cortes == 'corte_lectura') {
@@ -698,13 +699,15 @@
                     data: {
                         cod_Cortelectura: codCorteLectura,
                         DatoModificar: _DatoModificarCorte,
-                        campoModificar: $scope.campo_opcion_Cortes
+                        campoModificar: $scope.campo_opcion_Cortes,
+                        comentarioCorte: txtObservacionCorte
                     }
                 }
                 $http(variables)
-                .success(function (data) {
-                    if (data == '"Ok"') {
+                    .success(function (data) {
                         $('.sige-load').hide();
+                    if (data == '"Ok"') {
+
                         new PNotify({
                             title: 'Sistemas',
                             text: 'Se actualizó la información. Muchas gracias',
@@ -724,11 +727,13 @@
                                         if ($scope.campo_opcion_Cortes == 'cod_observacion') {
                                             $scope.ListaCortes[i].id_Observacion_corte = _DatoModificarCorte
                                             $scope.ListaCortes[i].observacion = valorTextoSeleccionadoObs;
+                                            $scope.ListaCortes[i].Observacion_corte = txtObservacionCorte;
                                                 break;
                                         }
                                         else if ($scope.campo_opcion_Cortes == 'cod_observacionResultado') {
                                             $scope.ListaCortes[i].id_resultadoObsCorte = _DatoModificarCorte
                                             $scope.ListaCortes[i].id_observacionResultado_corte = valorTextoSeleccionadoResultado;
+                                            $scope.ListaCortes[i].Observacion_corte = txtObservacionCorte;
                                                 break;
                                         }
                                     }
@@ -2340,8 +2345,6 @@
                 }
                 else if (cbo_servicio.value == 3 || cbo_servicio.value == 4) {
                     urlPage = '../LecturaEnviarCliente/DescargarArchivoTexto_CorteReconexiones';
-
-                    //$('#modalCorteReconexion').modal({ show: 'false' });
                     $('#modalCorteReconexion').modal('show');
 
                     $scope.nombreServicio = $("#cbo_servicio option:selected").text();
@@ -3209,6 +3212,83 @@
             };
 
 
+            $scope.DescargaExcel_macros = function (tipoMacro) {
+                //tipoMacro = 1 ordenes , tipoMacro = 2 operaciones 
+
+                let id_link = document.getElementById('id_link');
+                let cbo_servicio = document.getElementById('cbo_servicio');
+                let cbo_estado = document.getElementById('cbo_estado');
+                let dtp_fechaAsigna = document.getElementById('dtp_fechaAsigna');
+
+                if (cbo_servicio.value == '0' || cbo_servicio.value == 0) {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor seleccione un Servicio. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if (cbo_servicio.value != '3' && cbo_servicio.value != '4') {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Reporte solo para Corte y Reconexion',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if (cbo_estado.value == '0' || cbo_estado.value == 0) {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor seleccione un Estado. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if (dtp_fechaAsigna.value == '' || dtp_fechaAsigna.value == null) {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor seleccione una Fecha de asignacion. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                $('.sige-load').show();
+                var variables = {
+                    method: 'post',
+                    url: '../LecturaEnviarCliente/DescargaExcel_macros',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    data: {
+                        idServicio: cbo_servicio.value,
+                        idEstado: cbo_estado.value,
+                        fechaAsignacion: dtp_fechaAsigna.value,
+                        tipoMacro: tipoMacro
+                    }
+                }
+
+                $http(variables)
+                    .success(function (res) {
+                        $('.sige-load').hide();
+                        if (res.ok) {
+                            window.open(res.data, '_blank');
+                        } else {
+                            alert(JSON.stringify(res.data))
+                        }
+                    })
+                    .error(function () {
+                        $('.sige-load').hide();
+                        alert('Lo sentimos, Ocurrio un problema, vuelva a intentar.')
+                    });
+            };
+
+
+
+
         })
 
         function fnParametros() {
@@ -3548,8 +3628,16 @@
                                 <td>{{item.medidor_corte}}</td>
                                 <td style="color:red">{{item.ubicacion_Medidor}}</td>
                                 <td ng-click="ModificarCortesReconexiones(item,item.lectura, 'corte_lectura');" style="cursor: pointer"><a href=" #">{{item.lectura}}</a></td>
-                                <td ng-click="ModificarCortesReconexiones(item,item.id_Observacion_corte, 'cod_observacion');" style="cursor: pointer"><a href=" #">{{item.observacion}}</a></td>
-                                <td ng-click="ModificarCortesReconexiones(item,item.id_resultadoObsCorte, 'cod_observacionResultado');" style="cursor: pointer"><a href=" #">{{item.id_observacionResultado_corte}}</a></td>
+                                <td ng-click="ModificarCortesReconexiones(item,item.id_Observacion_corte, 'cod_observacion');" style="cursor: pointer">
+                                    <b style="text-decoration: underline;  ">
+                                        {{item.observacion}}
+                                    </b>
+                                </td>
+                                <td ng-click="ModificarCortesReconexiones(item,item.id_resultadoObsCorte, 'cod_observacionResultado');" style="cursor: pointer">
+                                     <b>
+                                        {{item.id_observacionResultado_corte}}
+                                    </b>
+                                </td>
                                 <td>{{item.ope_nombre}}</td>
                                 <td>{{item.direccion}}</td>
                                 <td>{{item.distrito}}</td>
@@ -3666,6 +3754,13 @@
                                 <button role="button" class="btn btn-info btn-sm" ng-click="DescargaExcel_EnvioCliente();"><i class="fa fa-download fa-lg"></i> Enviar al Cliente</button>
                                 <button role="button" class="btn btn-info btn-sm" ng-click="DescargaExcel_EnvioCliente_new();"><i class="fa fa-download fa-lg"></i> Enviar al Cliente New</button>
                                 <button role="button" class="btn btn-danger btn-sm" ng-click="VisualizarModalPendientes();"><i class="fa fa-windows fa-lg"></i> Visualizar Pendientes</button>
+
+
+                                <button class="btn btn-default btn-sm mt-1" ng-click="DescargaExcel_macros(1);"><span class="glyphicon glyphicon-list-alt"></span> Macro-Ordenes </button>
+                                <button class="btn btn-default btn-sm mt-1" ng-click="DescargaExcel_macros(2);"><span class="glyphicon glyphicon-list-alt"></span> Macro-Operaciones </button>
+
+
+
                             </div>
                         </div>
                     </div>
@@ -4161,7 +4256,7 @@
                 <div class="panel panel-oscuro">
                     <div class="panel-heading">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
-                        <h6 class="modal-title"><i class="fa fa-cogs fa-lg"></i> EDITAR REGISTRO</h6>
+                        <h6 class="modal-title"><i class="fa fa-cogs fa-lg"></i> EDITAR REGISTRO CyR</h6>
                     </div>
                     <div class="panel-body">
                         <form class="form-inline ">
@@ -4192,10 +4287,14 @@
                                     </div>
                                     <div class="form-group" style="padding-left: 5px; padding-right: 5px;padding-top: 10px" ng-show=FlagCorteCodObservacionResultado>
                                         <label for="txt_edit_CorteobservacionResultado" class="control-label">Resultado : </label>
-                                        <select id="txt_edit_CorteobservacionResultado" class="form-control" style="width:220px;">
+                                        <select id="txt_edit_CorteobservacionResultado" class="form-control" style="width: 380px !important" >
                                             <option value=0>--[ Seleccione ]-- </option>
                                             <option ng-repeat="item in ListaObservacionesResultado" value="{{item.id_Observacion}}">{{item.descripcion_observacion}}</option>
                                         </select>
+                                    </div>
+                                    <div class="form-group" style="padding-left: 5px; padding-right: 5px;padding-top: 10px" ng-show=FlagCorteCodObservacionResultado>
+                                        <label for="txtObservacionCorte" class="control-label">Comentario : </label>
+                                        <input id="txtObservacionCorte" class="form-control" type="text"  style="width: 380px !important" >
                                     </div>
                                 </div>
                             </fieldset>

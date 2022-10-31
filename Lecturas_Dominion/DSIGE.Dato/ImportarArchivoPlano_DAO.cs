@@ -256,7 +256,7 @@ namespace DSIGE.Dato
                 using (SqlConnection con = new SqlConnection(cadenaCnx))
                 {
                     con.Open();
-                    using (SqlCommand cmd = new SqlCommand("SP_S_ENVIAR_TRABAJO_CLIENTE_DESCARGAR_TEXT", con))
+                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMPORAL_IMPORTACION_TXT", con))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;

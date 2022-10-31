@@ -342,7 +342,7 @@
                         }
                     }
 
-                    if (idServicio == 2 || idServicio == 9) { /// solo reclamos --
+                    if (idServicio == 2 || idServicio == 9) { /// Relecturas, solo reclamos --
 
                         var name = "";
                         if (cbo_opcion == 1) {///----cargando
@@ -394,16 +394,43 @@
                                 $('.sige-load').hide();
 
                                 $scope.Lista_Lecturas_Temporal = [];
-                                if (cbo_opcion == 1 || idServicio == '1') { ///CARGAR
+                                if (cbo_opcion == 1 || cbo_opcion == '1') { ///CARGAR
+                                    //if (res.ok == true) {
+                                    //    btn_ver.disabled = true;
+                                    //    $scope.Lista_Lecturas_Temporal = res.data;
+                                    //    btn_Guardar.disabled = false;
+
+                                    //} else {
+                                    //    btn_Guardar.disabled = true;
+                                    //    alert(res.data);
+                                    //}
+
                                     if (res.ok == true) {
                                         btn_ver.disabled = true;
                                         $scope.Lista_Lecturas_Temporal = res.data;
-                                        btn_Guardar.disabled = false;
+
+                                        for (var i = 0, len = res.data.length; i < len; i++) {
+                                            if (res.data[i].cant_erroneo > 0) {
+                                                Flag_Cant = (Flag_Cant + 1);
+                                                break;
+                                            }
+                                        }
+
+                                        $scope.Cant_Null_Operador = Cant;
+                                        $scope.Cant_Reg_Lecturas = Flag_Cant;
+
+                                        if (Flag_Cant == 0) {
+                                            btn_Guardar.disabled = false;
+                                        }
+                                        else {
+                                            btn_Guardar.disabled = true;
+                                        }
 
                                     } else {
                                         btn_Guardar.disabled = true;
-                                        alert(res.data);
+                                        alert(JSON.stringify(res.data));
                                     }
+
                                 }
                                 else if (cbo_opcion == 2 || cbo_opcion == '2') {
                                     if (res.ok == true) {
@@ -952,6 +979,7 @@
 
                 var idServicio = document.getElementById('id_servicio').value;
                 var Fecha_asignacion = document.getElementById('_fecha').value;
+ 
 
                 if (idServicio == '0') {
                     new PNotify({
@@ -1105,6 +1133,9 @@
 
 
             $scope.Descargar_formato = function () {
+
+                const cbo_opcion = document.getElementById('cbo_opcion').value;
+
                 if ($scope.servicios == 0 || $scope.servicios == '0' || $scope.servicios =='') {
                     new PNotify({
                         title: 'Sistemas',
@@ -1114,10 +1145,12 @@
                     return;
                 }
 
+ 
+
                 if ($scope.servicios == 3) {
                     window.open("../formatos/FORMATO_CORTES_NEW.xls");
                 }
-                else if ($scope.servicios == 2) {
+                else if ($scope.servicios == 2 && cbo_opcion == 1) {  /// cargar
                     window.open("../formatos/FORMATO_RELECTURAS.xlsx");
                 }
                 else if ($scope.servicios == 4) {
@@ -1127,7 +1160,7 @@
                 }else if ($scope.servicios == 7) {
                     window.open("../formatos/FORMATO_GRANDES_CLIENTES.xlsx");
                 }
-                else if ($scope.servicios == 9) {
+                else if ($scope.servicios == 9 && cbo_opcion == 1) {
                     window.open("../formatos/FORMATO_RECLAMOS.xlsx");
                 }
 
@@ -1272,7 +1305,8 @@
                 <div class="row">
 
                     <div class="col-sm-4 col-md-6">
-                        <input type="file" class="filestyle" style="height: 38px !important;" file-model="myFile" data-placeholder="Ningun Archivo Seleccionado" data-buttonname="btn-primary" data-size="sm" data-buttonbefore="true" data-buttontext="  Seleccionar Archivo..">
+                        <input type="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                         class="filestyle" style="height: 38px !important;" file-model="myFile" data-placeholder="Ningun Archivo Seleccionado" data-buttonname="btn-primary" data-size="sm" data-buttonbefore="true" data-buttontext="  Seleccionar Archivo..">
                     </div>
 
                     <div class="col-sm-8 col-md-6">
@@ -1317,6 +1351,7 @@
                                     <th>Nro fila</th>
                                     <th>Distrito</th>
                                     <th>Total</th>
+                                    <th>Cant. Erroneo</th>
                                 </tr>
                                 <tr ng-if="showClientes">
                                     <th>Nro fila</th>
@@ -1349,6 +1384,9 @@
                                     <td>{{$index + 1}}</td>
                                     <td>{{item.distrito_suministro}}</td>
                                     <td>{{item.cantidad}}</td>
+                                    <td class="text-right" style="color:red; font-weight: 900">
+                                        <p ng-show="item.cant_erroneo > 0 ? true: false">   {{item.cant_erroneo}} </p> 
+                                    </td>
                                 </tr>
                                 <tr ng-if="showClientes" ng-repeat="item in Lista_Lecturas_Temporal">
                                     <td>{{$index + 1}}</td>

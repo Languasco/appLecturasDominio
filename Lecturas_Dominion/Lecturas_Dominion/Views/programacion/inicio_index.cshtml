@@ -621,7 +621,7 @@
                         $scope.List_Cortes = data;
 
                         setTimeout(function () {
-                            document.getElementById('total_registros').innerHTML = 'Total registros :' + data.length;
+                            document.getElementById('total_registros').innerHTML = 'Total registros :' + (data.length - 1) ;
                         }, 100);
 
                         generarMarkets(data);

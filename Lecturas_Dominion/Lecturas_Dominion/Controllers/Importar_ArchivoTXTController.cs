@@ -269,7 +269,7 @@ namespace DSIGE.Web.Controllers
                 string[] lines = System.IO.File.ReadAllLines(fileLocation);
                 foreach (string line in lines)
                 {
-                    var arrayText = line.ToString().Split('\t');
+                    var arrayText = line.ToString().Split('|');
 
                     ImportarTXT_E obj_entidad = new ImportarTXT_E();
 

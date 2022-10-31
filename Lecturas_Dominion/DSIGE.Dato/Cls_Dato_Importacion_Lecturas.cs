@@ -1177,7 +1177,7 @@ namespace DSIGE.Dato
                 using (SqlConnection cn = new SqlConnection(cadenaCnx))
                 {
                     cn.Open();
-                    using (SqlCommand cmd = new SqlCommand("SP_S_IMPORTAR_ARCHIVO_EXCEL_RECLAMO_AGRUPADO", cn))
+                    using (SqlCommand cmd = new SqlCommand("SP_S_IMPORTAR_ARCHIVO_EXCEL_RECLAMO_AGRUPADO_V2", cn))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -1213,7 +1213,7 @@ namespace DSIGE.Dato
                 using (SqlConnection cn = new SqlConnection(cadenaCnx))
                 {
                     cn.Open();
-                    using (SqlCommand cmd = new SqlCommand("SP_S_IMPORTAR_ARCHIVO_EXCEL_RELECTURA_AGRUPADO", cn))
+                    using (SqlCommand cmd = new SqlCommand("SP_S_IMPORTAR_ARCHIVO_EXCEL_RELECTURA_AGRUPADO_V2", cn))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -1719,7 +1719,7 @@ namespace DSIGE.Dato
                 using (SqlConnection con = new SqlConnection(cadenaCnx))
                 {
                     con.Open();
-                    using (SqlCommand cmd = new SqlCommand("SP_I_IMPORTAR_EXCEL_RECLAMO_ENVIAR_MOVIL", con))
+                    using (SqlCommand cmd = new SqlCommand("SP_I_IMPORTAR_EXCEL_RECLAMO_ENVIAR_MOVIL_V2", con))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -1749,7 +1749,7 @@ namespace DSIGE.Dato
                 using (SqlConnection con = new SqlConnection(cadenaCnx))
                 {
                     con.Open();
-                    using (SqlCommand cmd = new SqlCommand("SP_I_IMPORTAR_EXCEL_CARGAR_RELECTURA_ENVIAR_MOVIL", con))
+                    using (SqlCommand cmd = new SqlCommand("SP_I_IMPORTAR_EXCEL_CARGAR_RELECTURA_ENVIAR_MOVIL_V2", con))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -2204,7 +2204,7 @@ namespace DSIGE.Dato
                     con.Open();
 
                     //eliminando registros del usuario
-                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMP_RECLAMOS", con))
+                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMP_RECLAMOS_V2", con))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -2218,12 +2218,12 @@ namespace DSIGE.Dato
 
                         bulkCopy.BatchSize = 500;
                         bulkCopy.NotifyAfter = 1000;
-                        bulkCopy.DestinationTableName = "TEMP_RECLAMOS";
+                        bulkCopy.DestinationTableName = "TEMP_RECLAMOS_V2";
                         bulkCopy.WriteToServer(dt);
 
                         //Actualizando campos 
 
-                        string Sql = "UPDATE TEMP_RECLAMOS SET nombreArchivo='" + nombreArchivo + "',   loc_id ='" + idlocal + "' , idUsuarioExport='" + usuario + "', fechaAsignacion=getdate()   WHERE idUsuarioExport IS NULL    ";
+                        string Sql = "UPDATE TEMP_RECLAMOS_V2 SET nombreArchivo='" + nombreArchivo + "',   loc_id ='" + idlocal + "' , idUsuarioExport='" + usuario + "', fechaAsignacion=getdate()   WHERE idUsuarioExport IS NULL    ";
 
                         using (SqlCommand cmd = new SqlCommand(Sql, con))
                         {
@@ -2271,7 +2271,7 @@ namespace DSIGE.Dato
                     con.Open();
 
                     //eliminando registros del usuario
-                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMP_RELECTURA", con))
+                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMP_RELECTURA_V2", con))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -2285,12 +2285,12 @@ namespace DSIGE.Dato
 
                         bulkCopy.BatchSize = 500;
                         bulkCopy.NotifyAfter = 1000;
-                        bulkCopy.DestinationTableName = "TEMP_RELECTURA";
+                        bulkCopy.DestinationTableName = "TEMP_RELECTURA_V2";
                         bulkCopy.WriteToServer(dt);
 
                         //Actualizando campos 
 
-                        string Sql = "UPDATE TEMP_RELECTURA SET nombreArchivo='" + nombreArchivo + "',   loc_id ='" + idlocal + "' , idUsuarioExport='" + usuario + "', fechaAsignacion=getdate()   WHERE idUsuarioExport IS NULL    ";
+                        string Sql = "UPDATE TEMP_RELECTURA_V2 SET nombreArchivo='" + nombreArchivo + "',   loc_id ='" + idlocal + "' , idUsuarioExport='" + usuario + "', fechaAsignacion=getdate()   WHERE idUsuarioExport IS NULL    ";
 
                         using (SqlCommand cmd = new SqlCommand(Sql, con))
                         {
@@ -2750,6 +2750,500 @@ namespace DSIGE.Dato
             }
             return res;
         }
+
+
+
+
+        //CORTE Y RECONEXIONES
+
+
+        public object Capa_Dato_save_temporalCargaProgramacion(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            resul res = new resul();
+
+            DataTable dt = new DataTable();
+            DataTable dt_detalle = new DataTable();
+
+            try
+            {
+                string sql = "SELECT * FROM [Importar$]";
+
+                OleDbDataAdapter da = new OleDbDataAdapter(sql, ConectarExcel(fileLocation));
+                da.SelectCommand.CommandType = CommandType.Text;
+                da.Fill(dt);
+                cn.Close();
+
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+
+                    //eliminando registros del usuario
+                    using (SqlCommand cmd = new SqlCommand("SP_D_ELIMINAR_TEMPORAL_CARGA_PROGRAMACION_V2", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    //guardando al informacion de la importacion
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(con))
+                    {
+
+                        bulkCopy.BatchSize = 500;
+                        bulkCopy.NotifyAfter = 1000;
+                        bulkCopy.DestinationTableName = "TEMPORAL_CARGA_PROGRAMACION_V2";
+                        bulkCopy.WriteToServer(dt);
+
+                        //Actualizando campos 
+
+                        string Sql = "UPDATE TEMPORAL_CARGA_PROGRAMACION_V2 SET  idServicio ='" + idservicio + "' , fechaAsignacion='" + idfechaAsignacion + "', nombreArchivo='" + nombreArchivo + "',   tipoCarga ='" + idOpcion + "' , idUsuarioImportacion='" + usuario + "', fechaImportacion=getdate()   WHERE idUsuarioImportacion IS NULL    ";
+
+                        using (SqlCommand cmd = new SqlCommand(Sql, con))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.Text;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("SP_S_CARGA_PROGRAMACION_AGRUPADO_V2", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        using (SqlDataAdapter da2 = new SqlDataAdapter(cmd))
+                        {
+                            da2.Fill(dt_detalle);
+                        }
+                    }
+                }
+
+                res.ok = true;
+                res.data = dt_detalle;
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            finally
+            {
+                cn.Close();
+            }
+            return res;
+        }
+
+
+        public object Capa_Dato_save_temporalMacroOrdenes(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            resul res = new resul();
+
+            DataTable dt = new DataTable();
+            DataTable dt_detalle = new DataTable();
+
+            try
+            {
+                string sql = "SELECT * FROM [Importar$]";
+
+                OleDbDataAdapter da = new OleDbDataAdapter(sql, ConectarExcel(fileLocation));
+                da.SelectCommand.CommandType = CommandType.Text;
+                da.Fill(dt);
+                cn.Close();
+
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+
+                    //eliminando registros del usuario
+                    using (SqlCommand cmd = new SqlCommand("SP_D_ELIMINAR_TEMPORAL_MACRO_ORDENES", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    //guardando al informacion de la importacion
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(con))
+                    {
+
+                        bulkCopy.BatchSize = 500;
+                        bulkCopy.NotifyAfter = 1000;
+                        bulkCopy.DestinationTableName = "TEMPORAL_MACRO_ORDENES";
+                        bulkCopy.WriteToServer(dt);
+
+                        //Actualizando campos 
+
+                        string Sql = "UPDATE TEMPORAL_MACRO_ORDENES SET  idServicio ='" + idservicio + "' , fechaAsignacion='" + idfechaAsignacion + "', nombreArchivo='" + nombreArchivo + "',   tipoCarga ='" + idOpcion + "' , idUsuarioImportacion='" + usuario + "', fechaImportacion=getdate()   WHERE idUsuarioImportacion IS NULL    ";
+
+                        using (SqlCommand cmd = new SqlCommand(Sql, con))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.Text;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("SP_S_CARGA_MACRO_ORDENES_AGRUPADO", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        using (SqlDataAdapter da2 = new SqlDataAdapter(cmd))
+                        {
+                            da2.Fill(dt_detalle);
+                        }
+                    }
+                }
+
+                res.ok = true;
+                res.data = dt_detalle;
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            finally
+            {
+                cn.Close();
+            }
+            return res;
+        }
+
+
+        public object Capa_Dato_save_temporalMacroOperaciones(string fileLocation, int usuario, int idservicio, string idfechaAsignacion, string nombreArchivo, int idOpcion)
+        {
+            resul res = new resul();
+
+            DataTable dt = new DataTable();
+            DataTable dt_detalle = new DataTable();
+
+            try
+            {
+                string sql = "SELECT * FROM [Importar$]";
+
+                OleDbDataAdapter da = new OleDbDataAdapter(sql, ConectarExcel(fileLocation));
+                da.SelectCommand.CommandType = CommandType.Text;
+                da.Fill(dt);
+                cn.Close();
+
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+
+                    //eliminando registros del usuario
+                    using (SqlCommand cmd = new SqlCommand("SP_D_ELIMINAR_TEMPORAL_MACRO_OPERACIONES", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    //guardando al informacion de la importacion
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(con))
+                    {
+
+                        bulkCopy.BatchSize = 500;
+                        bulkCopy.NotifyAfter = 1000;
+                        bulkCopy.DestinationTableName = "TEMPORAL_MACRO_OPERACIONES";
+                        bulkCopy.WriteToServer(dt);
+
+                        //Actualizando campos 
+
+                        string Sql = "UPDATE TEMPORAL_MACRO_OPERACIONES SET  idServicio ='" + idservicio + "' , fechaAsignacion='" + idfechaAsignacion + "', nombreArchivo='" + nombreArchivo + "',   tipoCarga ='" + idOpcion + "' , idUsuarioImportacion='" + usuario + "', fechaImportacion=getdate()   WHERE idUsuarioImportacion IS NULL    ";
+
+                        using (SqlCommand cmd = new SqlCommand(Sql, con))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.Text;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand("SP_S_CARGA_MACRO_OPERACIONES_AGRUPADO", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idservicio;
+                        cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+
+                        using (SqlDataAdapter da2 = new SqlDataAdapter(cmd))
+                        {
+                            da2.Fill(dt_detalle);
+                        }
+                    }
+                }
+
+                res.ok = true;
+                res.data = dt_detalle;
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            finally
+            {
+                cn.Close();
+            }
+            return res;
+        }
+
+
+        public object Capa_Dato_save_CargaProgramacion(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            resul res = new resul();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+
+                    SqlTransaction sqlTran = con.BeginTransaction();
+
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("SP_I_CARGA_PROGRAMACION_GRABAR_V2", con, sqlTran))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.Add("@fechaAsignacion", SqlDbType.VarChar).Value = fechaAsignacion;
+                            cmd.Parameters.Add("@fechaEnvioMovil", SqlDbType.VarChar).Value = fechaEnvioMovil;
+                            cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idServicio;
+                            cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+                            cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                            cmd.ExecuteNonQuery();
+                        }
+                        sqlTran.Commit();
+
+                        res.ok = true;
+                        res.data = "OK";
+                    }
+                    catch (Exception ex)
+                    {
+                        sqlTran.Rollback();
+                        res.ok = false;
+                        res.data = ex.Message;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
+
+        public object Capa_Dato_save_MacroOrdenes(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            resul res = new resul();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+                    SqlTransaction sqlTran = con.BeginTransaction();
+
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("SP_I_MACRO_ORDENES_GRABAR", con, sqlTran))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.Add("@fechaAsignacion", SqlDbType.VarChar).Value = fechaAsignacion;
+                            cmd.Parameters.Add("@fechaEnvioMovil", SqlDbType.VarChar).Value = fechaEnvioMovil;
+                            cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idServicio;
+                            cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+                            cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                            cmd.ExecuteNonQuery();
+                        }
+                        sqlTran.Commit();
+
+                        res.ok = true;
+                        res.data = "OK";
+                    }
+                    catch (Exception ex)
+                    {
+                        sqlTran.Rollback();
+                        res.ok = false;
+                        res.data = ex.Message;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
+
+        public object Capa_Dato_save_MacroOperaciones(string fechaEnvioMovil, int idServicio, int idOpcion, int usuario, string fechaAsignacion)
+        {
+            resul res = new resul();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+                    SqlTransaction sqlTran = con.BeginTransaction();
+
+                    try
+                    {
+                        using (SqlCommand cmd = new SqlCommand("SP_I_MACRO_OPERACIONES_GRABAR", con, sqlTran))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.Add("@fechaAsignacion", SqlDbType.VarChar).Value = fechaAsignacion;
+                            cmd.Parameters.Add("@fechaEnvioMovil", SqlDbType.VarChar).Value = fechaEnvioMovil;
+                            cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idServicio;
+                            cmd.Parameters.Add("@tipoCarga", SqlDbType.Int).Value = idOpcion;
+                            cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = usuario;
+                            cmd.ExecuteNonQuery();
+                        }
+                        sqlTran.Commit();
+
+                        res.ok = true;
+                        res.data = "OK";
+                    }
+                    catch (Exception ex)
+                    {
+                        sqlTran.Rollback();
+                        res.ok = false;
+                        res.data = ex.Message;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
+        public object Capa_Dato_save_temporalSuministroMasivo_noCortar(string fileLocation, int usuario, int idservicio)
+        {
+            object resul = null;
+            resul res = new resul();
+
+            DataTable dt = new DataTable();
+
+            try
+            {
+                string sql = "SELECT * FROM [Importar$]";
+
+                OleDbDataAdapter da = new OleDbDataAdapter(sql, ConectarExcel(fileLocation));
+                da.SelectCommand.CommandType = CommandType.Text;
+                da.Fill(dt);
+                cn.Close();
+
+                using (SqlConnection con = new SqlConnection(cadenaCnx))
+                {
+                    con.Open();
+
+                    //eliminando registros del usuario
+                    using (SqlCommand cmd = new SqlCommand("SP_D_TEMP_SUMINISTRO_MASIVO_NO_CORTAR", con))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@id_usuario", SqlDbType.Int).Value = usuario;
+                        cmd.Parameters.Add("@id_servicio", SqlDbType.Int).Value = idservicio;
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    //guardando al informacion de la importacion
+                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(con))
+                    {
+
+                        bulkCopy.BatchSize = 500;
+                        bulkCopy.NotifyAfter = 1000;
+                        bulkCopy.DestinationTableName = "TEMP_SUMINISTRO_MASIVO_NO_CORTAR";
+                        bulkCopy.WriteToServer(dt);
+
+                        //Actualizando campos 
+
+                        string Sql = "UPDATE TEMP_SUMINISTRO_MASIVO_NO_CORTAR SET  id_servicio ='" + idservicio + "' , idUsuarioImport='" + usuario + "' , fecha_creacion = getdate()  WHERE idUsuarioImport IS NULL    ";
+
+                        using (SqlCommand cmd = new SqlCommand(Sql, con))
+                        {
+                            cmd.CommandTimeout = 0;
+                            cmd.CommandType = CommandType.Text;
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    resul = "OK";
+                }
+
+                res.ok = true;
+                res.data = resul;
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            finally
+            {
+                cn.Close();
+            }
+            return res;
+        }
+
+        public object Capa_Dato_Agrupado_suministroMasivo_noCortar(int idServicio, int cod_usuario)
+        {
+            DataTable dt_detalle = new DataTable();
+            resul res = new resul();
+            try
+            {
+                using (SqlConnection cn = new SqlConnection(cadenaCnx))
+                {
+                    cn.Open();
+                    using (SqlCommand cmd = new SqlCommand("SP_S_SUMINISTRO_MASIVO_NO_CORTAR_AGRUPADO", cn))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@id_servicio", SqlDbType.Int).Value = idServicio;
+                        cmd.Parameters.Add("@id_usuario", SqlDbType.Int).Value = cod_usuario;
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            da.Fill(dt_detalle);
+                        }
+                    }
+                }
+                res.ok = true;
+                res.data = dt_detalle;
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
 
 
     }

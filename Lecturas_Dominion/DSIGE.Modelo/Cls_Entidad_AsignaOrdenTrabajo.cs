@@ -373,7 +373,9 @@ namespace DSIGE.Modelo
             public string Porcentaje { get; set; }
             public string PorcentajeMayo { get; set; }
             public string LecturaMenor { get; set; }
- 
+
+            public string Observacion_corte { get; set; }
+
         }
 
 

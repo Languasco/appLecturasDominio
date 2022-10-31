@@ -199,13 +199,13 @@ namespace DSIGE.Web.Controllers
         }
 
         [HttpPost]
-        public string ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar)
+        public string ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar, string comentarioCorte)
         {
             string loDatos;
             try
             {
                 Cls_Negocio_AsignarOrdenTrabajo obj_negocio = new Cls_Negocio_AsignarOrdenTrabajo();
-                loDatos = obj_negocio.Capa_Negocio_Set_ActualizandoCortesReconexiones(cod_Cortelectura, DatoModificar, campoModificar);
+                loDatos = obj_negocio.Capa_Negocio_Set_ActualizandoCortesReconexiones(cod_Cortelectura, DatoModificar, campoModificar , comentarioCorte,((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id);
                 return _Serialize(loDatos, true);
 
             }
@@ -379,7 +379,7 @@ namespace DSIGE.Web.Controllers
             String _ruta;
             string ruta_descarga = ConfigurationManager.AppSettings["Archivos"];
             int index = 0;
-
+            string numerocontratoUltimo = "";
 
             try
             {
@@ -535,7 +535,9 @@ namespace DSIGE.Web.Controllers
                                         Excel.ExcelWorksheet oWs = oEx.Workbook.Worksheets.Add(nombreExcel);
                                         oWs.Cells.Style.Font.SetFromFont(new Font("Tahoma", 9));
 
-                                        index = 1; 
+                                        index = 1;
+                                        oWs.Cells[1, index].Value = "Primera Reconexión "; index += 1;
+
                                         oWs.Cells[1, index].Value = "Clase de aviso"; index += 1;
                                         oWs.Cells[1, index].Value = "Aviso"; index += 1;
                                         oWs.Cells[1, index].Value = "Fecha de aviso"; index += 1;
@@ -567,21 +569,33 @@ namespace DSIGE.Web.Controllers
                                         oWs.Cells[1, index].Value = "Cód.codificación"; index += 1;
 
                                         oWs.Cells[1, index].Value = "tcos"; index += 1;
+                                        oWs.Cells[1, index].Value = "Fecha"; index += 1;
+
                                         oWs.Cells[1, index].Value = "HORA"; index += 1;
                                         oWs.Cells[1, index].Value = "LECTURA "; index += 1;
                                         oWs.Cells[1, index].Value = "IMPOSIBILIDAD "; index += 1;
                                         oWs.Cells[1, index].Value = "NOMBRE DEL CLIENTE"; index += 1;
                                         oWs.Cells[1, index].Value = "OBSERVACION "; index += 1;
+                                        
+                                        oWs.Cells[1, index].Value = "Hora Inicio "; index += 1;
+                                        oWs.Cells[1, index].Value = "Hora Termino "; index += 1;
+
+                      
 
                                         foreach (DataRow oBj in dt_detalle.Rows)
                                         {
                                             index = 1;
+
+                                            oWs.Cells[_fila, index].Value = oBj["primeraReconexion"].ToString(); index += 1;
+
                                             oWs.Cells[_fila, index].Value = oBj["claseAviso"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["aviso"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["fechaAviso"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["horaAviso_corte"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["docBloqueo"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["ubicacion_Medidor"].ToString(); index += 1;
+
+                                            numerocontratoUltimo = oBj["ctaContrato"].ToString();
 
                                             oWs.Cells[_fila, index].Style.Numberformat.Format = "###0";
                                             oWs.Cells[_fila, index].Value = Convert.ToDouble(oBj["ctaContrato"]); index += 1;
@@ -611,12 +625,16 @@ namespace DSIGE.Web.Controllers
                                             oWs.Cells[_fila, index].Value = oBj["codificacion"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["codCodificacion"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["tcos"].ToString(); index += 1;
+                                            oWs.Cells[_fila, index].Value = oBj["fechaTrabajo"].ToString(); index += 1;
 
                                             oWs.Cells[_fila, index].Value = oBj["hora"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["lectura"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["imposibilidad"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["nombreCliente"].ToString(); index += 1;
                                             oWs.Cells[_fila, index].Value = oBj["Observacion_corte"].ToString(); index += 1;
+
+                                            oWs.Cells[_fila, index].Value = oBj["horaInicio"].ToString(); index += 1;
+                                            oWs.Cells[_fila, index].Value = oBj["horaTermino"].ToString(); index += 1;
 
                                             _fila++;
                                         }
@@ -625,7 +643,7 @@ namespace DSIGE.Web.Controllers
                                         oWs.Row(1).Style.HorizontalAlignment = Style.ExcelHorizontalAlignment.Center;
                                         oWs.Row(1).Style.VerticalAlignment = Style.ExcelVerticalAlignment.Center;
 
-                                        for (int i = 1; i <= 31; i++)
+                                        for (int i = 1; i <= 35; i++)
                                         {
                                             oWs.Column(i).AutoFit();
                                         }
@@ -644,6 +662,7 @@ namespace DSIGE.Web.Controllers
             }
             catch (Exception ex)
             {
+                numerocontratoUltimo = numerocontratoUltimo;
                 return _Serialize("0|" + ex.Message, true);
             }
         }
@@ -2011,6 +2030,33 @@ namespace DSIGE.Web.Controllers
                 Cls_Negocio_AsignarOrdenTrabajo obj_negocio = new Cls_Negocio_AsignarOrdenTrabajo();
                 loDatos = obj_negocio.Capa_negocio_DescargarArchivoTexto_EnvioCliente_new(id_local, id_tipo_servicio, estado, fechaAsignacion, id_supervisor, id_operario_supervisor);
                 return _Serialize(loDatos, true);
+            }
+            catch (Exception ex)
+            {
+                return _Serialize(ex.Message, true);
+            }
+        }
+
+
+        [HttpPost]
+        public string DescargaExcel_macros(int idServicio, int idEstado, string fechaAsignacion, int tipoMacro)
+        {
+            object loDatos = null;
+            try
+            {
+                Cls_Negocio_AsignarOrdenTrabajo obj_negocio = new Cls_Negocio_AsignarOrdenTrabajo();
+
+                if (tipoMacro == 1)
+                {
+                    loDatos = obj_negocio.Capa_Negocio_DescargaExcel_macros_ordenes(idServicio, idEstado, fechaAsignacion, tipoMacro, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id);
+                }
+                if (tipoMacro == 2)
+                {
+                    loDatos = obj_negocio.Capa_Negocio_DescargaExcel_macros_operaciones(idServicio, idEstado, fechaAsignacion, tipoMacro, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id);
+                }
+
+                return _Serialize(loDatos, true);
+
             }
             catch (Exception ex)
             {

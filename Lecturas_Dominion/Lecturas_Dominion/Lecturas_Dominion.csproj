@@ -613,6 +613,20 @@
     <Content Include="fonts\glyphicons-halflings-regular.woff" />
     <Content Include="fonts\Pe-icon-7-stroke.svg" />
     <Content Include="formatos\FORMATO_ARCHIVOS_LECTURA.txt" />
+    <Content Include="formatos\FORMATO_CARGA_PROGRAMACION.xlsx" />
+    <Content Include="formatos\FORMATO_CORTES.xls" />
+    <Content Include="formatos\FORMATO_CORTES_NEW.xls" />
+    <Content Include="formatos\FORMATO_GRANDES_CLIENTES.xlsx" />
+    <Content Include="formatos\FORMATO_IMPRESION_REPARTO.xlsx" />
+    <Content Include="formatos\FORMATO_MACRO_OPERACIONES.xlsx" />
+    <Content Include="formatos\FORMATO_MACRO_ORDENES.xlsx" />
+    <Content Include="formatos\FORMATO_RECLAMOS.xlsx" />
+    <Content Include="formatos\FORMATO_RECLAMOS_ANT.xlsx" />
+    <Content Include="formatos\FORMATO_RECONEXION.xls" />
+    <Content Include="formatos\FORMATO_RECONEXION_NEW.xls" />
+    <Content Include="formatos\FORMATO_RELECTURAS.xlsx" />
+    <Content Include="formatos\FORMATO_REPARTO.xlsx" />
+    <Content Include="formatos\FORMATO_SUMINISTRO.xlsx" />
     <Content Include="Plugin\Pdf\Select.HtmlToPdf.dll" />
     <Content Include="Plugin\Pdf\Select.HtmlToPdf.xml" />
     <Content Include="Scripts\jquery.inputmask.bundle.min.js" />
@@ -688,13 +702,6 @@
     <Content Include="fonts\Pe-icon-7-stroke.ttf" />
     <Content Include="fonts\Pe-icon-7-stroke.woff" />
     <Content Include="Content\iconos\icomoon333.zip" />
-    <Content Include="formatos\FORMATO_CORTES.xls" />
-    <Content Include="formatos\FORMATO_RECONEXION.xls" />
-    <Content Include="formatos\FORMATO_REPARTO.xlsx" />
-    <Content Include="formatos\FORMATO_IMPRESION_REPARTO.xlsx" />
-    <Content Include="formatos\FORMATO_RECLAMOS.xlsx" />
-    <Content Include="formatos\FORMATO_RECLAMOS_ANT.xlsx" />
-    <Content Include="formatos\FORMATO_GRANDES_CLIENTES.xlsx" />
     <Content Include="Plugin\Pdf\Select.Html.dep" />
     <Content Include="Files_GrandesClientes\1" />
     <Content Include="Files_GrandesClientes\10" />
@@ -723,8 +730,7 @@
     <Content Include="Files_GrandesClientes\Descargas\hector.xlsx" />
     <Content Include="Files_GrandesClientes\Descargas\INGRESAR_VERI.xlsx" />
     <Content Include="Files_GrandesClientes\Descargas\poner_foto.xlsx" />
-    <Content Include="formatos\FORMATO_RELECTURAS.xlsx" />
-    <Content Include="formatos\FORMATO_SUMINISTRO.xlsx" />
+    <Content Include="formatos\FORMATO_NO_CORTAR.xlsx" />
     <None Include="Properties\PublishProfiles\lectura.pubxml" />
     <None Include="Properties\PublishProfiles\roberto.pubxml" />
     <None Include="Scripts\jquery-1.7.1.intellisense.js" />
@@ -861,6 +867,7 @@
     <Content Include="Views\ResultadosLectura\index_ResultadosDia.cshtml" />
     <Content Include="Views\ReporteLiquidaconOT\liquidacionOT_Index.cshtml" />
     <Content Include="Views\Importar_ArchivoTXT\importarArchivo_index.cshtml" />
+    <Content Include="Views\Importar_Excel\importarCortesReconexiones_index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

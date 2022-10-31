@@ -428,14 +428,14 @@ namespace DSIGE.Negocio
             }
         }
 
-        public bool NCambioEstadoCorte(int id_tiposervicio, string fecha_asignacion, string suministro)
+        public bool NCambioEstadoCorte(int id_tiposervicio, string fecha_asignacion, string suministro, int SuministrosMasivos)
         {
             try
             {
                 DCorte oCorte = new DCorte();
 
 
-                return oCorte.Capa_Dato_Cambio_Estado_Corte(id_tiposervicio, fecha_asignacion, suministro); ;
+                return oCorte.Capa_Dato_Cambio_Estado_Corte(id_tiposervicio, fecha_asignacion, suministro, SuministrosMasivos); ;
             }
             catch (Exception e)
             {

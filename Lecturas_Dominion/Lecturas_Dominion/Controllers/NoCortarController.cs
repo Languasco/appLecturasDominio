@@ -38,16 +38,23 @@ namespace DSIGE.Web.Controllers
         }
 
         [HttpPost]
-        public ActionResult CambioEstadoCorte(int id_tiposervicio, string fecha_asignacion, string suministro)
+        public ActionResult CambioEstadoCorte(int id_tiposervicio, string fecha_asignacion, string suministro, int SuministrosMasivos)
         {
-            // Int32 respuesta = new NObservacion_Servicio().NAsignaServicio(__a, );
-            NCorte objetocorte = new NCorte();
 
-            var lits = objetocorte.NCambioEstadoCorte(id_tiposervicio, fecha_asignacion, suministro);
+            try
+            {
+                NCorte objetocorte = new NCorte();
+                var lits = objetocorte.NCambioEstadoCorte(id_tiposervicio, fecha_asignacion, suministro, SuministrosMasivos);
+                return Json(lits, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(ex.Message, JsonRequestBehavior.AllowGet);
+            }
 
-
-            return Json(lits, JsonRequestBehavior.AllowGet);
         }
+
+ 
 
 
     }

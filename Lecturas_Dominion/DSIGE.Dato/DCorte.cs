@@ -1370,7 +1370,7 @@ namespace DSIGE.Dato
 
         }
 
-        public bool Capa_Dato_Cambio_Estado_Corte(int id_tiposervicio, string fecha_asignacion, string suministro)
+        public bool Capa_Dato_Cambio_Estado_Corte(int id_tiposervicio, string fecha_asignacion, string suministro, int SuministrosMasivos)
         {
             try
             {
@@ -1378,13 +1378,14 @@ namespace DSIGE.Dato
                 {
                     cn.Open();
 
-                    using (SqlCommand cmd = new SqlCommand("SP_U_CORTE_SUMINISTRO", cn))
+                    using (SqlCommand cmd = new SqlCommand("SP_U_CORTE_SUMINISTRO_V222222", cn))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
                         cmd.Parameters.Add("@fechaAsignacion_corte", SqlDbType.VarChar).Value = fecha_asignacion;
-                        cmd.Parameters.Add("@TIPOSERVICIO", SqlDbType.Int).Value = id_tiposervicio;
+                        cmd.Parameters.Add("@tiposervicio", SqlDbType.Int).Value = id_tiposervicio;
                         cmd.Parameters.Add("@suministro", SqlDbType.VarChar).Value = suministro;
+                        cmd.Parameters.Add("@flagSuministroMasivo", SqlDbType.Int).Value = SuministrosMasivos;
 
                         cmd.ExecuteNonQuery();
                         return true;
@@ -1394,8 +1395,7 @@ namespace DSIGE.Dato
             }
             catch (Exception)
             {
-
-                return false;
+                throw;
             }
         }
 

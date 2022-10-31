@@ -361,12 +361,12 @@ namespace DSIGE.Negocio
 
         }
 
-        public string Capa_Negocio_Set_ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar)
+        public string Capa_Negocio_Set_ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar,   string comentarioCorte, int idusuario)
         {
             try
             {
                 Cls_Dato_AsignaOrdenTrabajo Objeto_Dato = new Cls_Dato_AsignaOrdenTrabajo();
-                return Objeto_Dato.Capa_Dato_Set_ActualizandoCortesReconexiones(cod_Cortelectura, DatoModificar, campoModificar);
+                return Objeto_Dato.Capa_Dato_Set_ActualizandoCortesReconexiones(cod_Cortelectura, DatoModificar, campoModificar, comentarioCorte, idusuario);
             }
             catch (Exception e)
             {
@@ -1076,6 +1076,37 @@ namespace DSIGE.Negocio
             Cls_Dato_AsignaOrdenTrabajo Objeto_Dato = new Cls_Dato_AsignaOrdenTrabajo();
             return Objeto_Dato.Capa_dato_DescargarArchivoTexto_EnvioCliente_new(local, servicio, estado, fechaAsigna, id_supervisor, id_operario_supervisor);
         }
+
+
+        //macros 
+        public object Capa_Negocio_DescargaExcel_macros_ordenes(int idServicio, int idEstado, string fechaAsignacion, int tipoMacro, int idUsuario)
+        {
+            try
+            {
+                Cls_Dato_AsignaOrdenTrabajo Objeto_Dato = new Cls_Dato_AsignaOrdenTrabajo();
+                return Objeto_Dato.GenerarReporte_macros_ordenes(idServicio, idEstado, fechaAsignacion, tipoMacro, idUsuario);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+        public object Capa_Negocio_DescargaExcel_macros_operaciones(int idServicio, int idEstado, string fechaAsignacion, int tipoMacro, int idUsuario)
+        {
+            try
+            {
+                Cls_Dato_AsignaOrdenTrabajo Objeto_Dato = new Cls_Dato_AsignaOrdenTrabajo();
+                return Objeto_Dato.GenerarReporte_macros_operaciones(idServicio, idEstado, fechaAsignacion, tipoMacro, idUsuario);
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
+
+
 
     }
 }

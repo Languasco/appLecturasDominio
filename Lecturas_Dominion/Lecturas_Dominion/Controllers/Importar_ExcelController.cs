@@ -21,6 +21,13 @@ namespace DSIGE.Web.Controllers
             return View();
         }
 
+        public ActionResult importarCortesReconexiones_index()
+        {
+            return View();
+        }
+
+
+
 
         [HttpPost]
         public ActionResult ImportarExcel(HttpPostedFileBase file, int idlocal)
@@ -762,6 +769,153 @@ namespace DSIGE.Web.Controllers
 
         }
 
+
+
+        // CORTE Y RECONEXIONES 
+
+
+        public string InsertaExcel_cortesReconexiones(HttpPostedFileBase file, string idfechaAsignacion, int idServicio, int idOpcion)
+        {
+
+            object loDatos = null;
+            string nomExcel = "";
+            string extension = "";
+            string NombreArchivo = "";
+            string fileLocation = "";
+            try
+            {
+                extension = System.IO.Path.GetExtension(file.FileName);
+
+                //-----generando clave unica---
+                var guid = Guid.NewGuid();
+                var guidB = guid.ToString("B");
+
+                if (idOpcion == 1)
+                {
+                    nomExcel = "cargaProgramacion_" + idServicio + "_" + Guid.Parse(guidB) + extension;
+                }
+                else if (idOpcion == 2)
+                {
+                    nomExcel = "macroOrdenes_" + idServicio + "_" + Guid.Parse(guidB) + extension;
+                }
+                else if (idOpcion == 3)
+                {
+                    nomExcel = "macroOperaciones_" + idServicio + "_" + Guid.Parse(guidB) + extension;
+                }
+
+                NombreArchivo = file.FileName;
+                fileLocation = Server.MapPath("~/Upload") + "\\" + nomExcel;
+
+                if (System.IO.File.Exists(fileLocation))
+                {
+                    System.IO.File.Delete(fileLocation);
+                }
+
+                file.SaveAs(fileLocation);
+
+                Cls_Negocio_Importacion_Lecturas Objeto_Negocio = new Cls_Negocio_Importacion_Lecturas();
+
+                if (idOpcion == 1)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_temporalCargaProgramacion(fileLocation, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id, idServicio, idfechaAsignacion, NombreArchivo, idOpcion);
+                }
+                else if (idOpcion == 2)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_temporalMacroOrdenes(fileLocation, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id, idServicio, idfechaAsignacion, NombreArchivo, idOpcion);
+                }
+                else if (idOpcion == 3)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_temporalMacroOperaciones(fileLocation, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id, idServicio, idfechaAsignacion, NombreArchivo, idOpcion);
+                }
+
+                return _Serialize(loDatos, true);
+            }
+            catch (Exception ex)
+            {
+                return _Serialize(ex.Message, true);
+            }
+        }
+
+        [HttpPost]
+        public string GrabarExcel_cortesReconexiones(string fechaEnvioMovil, int idServicio, int idOpcion, string fechaAsignacion)
+        {
+            object loDatos = null;
+            try
+            {
+                var usuario = ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id;
+                Cls_Negocio_Importacion_Lecturas Objeto_Negocio = new Cls_Negocio_Importacion_Lecturas();
+
+                if (idOpcion == 1)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_CargaProgramacion(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+
+                }
+                else if (idOpcion == 2)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_MacroOrdenes(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+                }
+                else if (idOpcion == 3)
+                {
+                    loDatos = Objeto_Negocio.Capa_Negocio_save_MacroOperaciones(fechaEnvioMovil, idServicio, idOpcion, usuario, fechaAsignacion);
+                }
+                return _Serialize(loDatos, true);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+        [HttpPost]
+        public string InsertaExcel_suministroMasivo_noCortar(HttpPostedFileBase file, int idServicio)
+        {
+            List<CorteTemporalCorte> oCortes = new List<CorteTemporalCorte>();
+            DateTime _fecha_actual = DateTime.Now;
+
+            try
+            {
+                object loDatos = null;
+                string nomExcel = "";
+                string extension = System.IO.Path.GetExtension(file.FileName);
+
+                nomExcel = idServicio + "_SUMINISTRO_NO_CORTAR" + ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id + extension;
+
+                string NombreArchivo = file.FileName;
+                string fileLocation = Server.MapPath("~/Upload") + "\\" + nomExcel;
+
+                if (System.IO.File.Exists(fileLocation))
+                {
+                    System.IO.File.Delete(fileLocation);
+                }
+                file.SaveAs(fileLocation);
+
+                Cls_Negocio_Importacion_Lecturas Objeto_Negocio = new Cls_Negocio_Importacion_Lecturas();
+                loDatos = Objeto_Negocio.Capa_Negocio_save_temporalSuministro_noCortar(fileLocation, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id, idServicio);
+
+                var res = _Serialize(loDatos, true);
+                JObject data = JObject.Parse(res.ToString());
+
+                if (data["ok"].ToString() == "True")
+                {
+                    loDatos = null;
+                    loDatos = Objeto_Negocio.Capa_Negocio_Agrupado_temporalSuministroMasivo_noCortar(idServicio, ((Sesion)Session["Session_Usuario_Acceso"]).usuario.usu_id);
+                    return _Serialize(loDatos, true);
+                }
+                else
+                {
+                    return res;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return _Serialize(ex.Message, true);
+            }
+
+
+
+        }
 
 
 

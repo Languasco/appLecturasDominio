@@ -6,41 +6,46 @@
 
 
 @section instances{
-    @Scripts.Render("~/Scripts/jquery.fileDownload.js")
-    @Scripts.Render("~/Content/angular/angular.js")
+    @*@Scripts.Render("~/Scripts/jquery.fileDownload.js")
+        @Scripts.Render("~/Content/angular/angular.js")
 
 
-    @Styles.Render("~/Content/dataTables-bootstrap/css/dataTables.bootstrap.min.css")
-    @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
-    @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
-    @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
-    @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
-    @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
-    @Scripts.Render("~/Content/bootstrap/js/bootstrap-filestyle.min.js")
+        @Styles.Render("~/Content/dataTables-bootstrap/css/dataTables.bootstrap.min.css")
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
+        @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
+        @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
+        @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
+        @Scripts.Render("~/Content/bootstrap/js/bootstrap-filestyle.min.js")
 
+        <script src="~/Content/angularfire/angularfire.min.js"></script>*@
+
+        @Styles.Render("~/Content/bootstrap-table/bootstrap-table.css")
+        @Scripts.Render("~/Content/bootstrap-table/bootstrap-table.js")
+
+        @Scripts.Render("~/Content/bootstrap-table/locale/bootstrap-table-es-MX.js")
+        @Scripts.Render("~/Content/bootstrap-table/locale/bootstrap-table-es-MX.js")
+        @Scripts.Render("~/Content/bootstrap/js/bootstrap-toggle.min.js")
+        @Styles.Render("~/Content/bootstrap/css/bootstrap-toggle.min.css")
+
+        @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
+        @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
+        @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
+
+        @Scripts.Render("~/Content/angular/angular.js")
+
+        @Scripts.Render("~/Content/bootstrap/js/bootstrap-filestyle.min.js")
+        @Scripts.Render("~/Scripts/jquery.fileDownload.js")
+        @*@Scripts.Render("~/Content/AnglarUpload/angular-file-upload.min.js")*@
+        <script src="~/Content/angularfire/angularfire.min.js"></script>
+
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
 
 }
 
 @section styles{
-    @*<style type="text/css">
-            .nav-tabs {
-                border-bottom: 0;
-            }
 
-            #_archivo.btn-info {
-                background-image: none;
-                color: inherit;
-                background-color: inherit !important;
-            }
-
-            .modal-dialog {
-                width: 300px;
-            }
-
-            .datepicker {
-                width: 200px;
-            }
-        </style>*@
 
     <style type="text/css">
         .fixed-table-toolbar .search {
@@ -114,7 +119,7 @@
         }
     </style>
 }
- 
+
 <script>
 
     $(function () {
@@ -128,32 +133,71 @@
 
 
 
-    var app = angular.module('appNoCortar', []).directive('onFinishRender', function ($timeout) {
-        return {
-            restrict: 'A',
-            link: function (scope, element, attr) {
-                if (scope.$last === true) {
-                    $timeout(function () {
-                        scope.$emit('ngRepeatFinished');
-                    });
-                }
-            }
-        }
-    })
-        .directive('ngEnter', function () {
-            return function (scope, element, attrs) {
-                element.bind("keydown keypress", function (event) {
-                    if (event.which === 13) {
-                        scope.$apply(function () {
-                            scope.$eval(attrs.ngEnter);
-                        });
+    //var app = angular.module('appNoCortar', []).directive('onFinishRender', function ($timeout) {
+    //    return {
+    //        restrict: 'A',
+    //        link: function (scope, element, attr) {
+    //            if (scope.$last === true) {
+    //                $timeout(function () {
+    //                    scope.$emit('ngRepeatFinished');
+    //                });
+    //            }
+    //        }
+    //    }
+    //})
+    //    .directive('ngEnter', function () {
+    //        return function (scope, element, attrs) {
+    //            element.bind("keydown keypress", function (event) {
+    //                if (event.which === 13) {
+    //                    scope.$apply(function () {
+    //                        scope.$eval(attrs.ngEnter);
+    //                    });
 
-                        event.preventDefault();
-                    }
-                });
-            }
-        })
+    //                    event.preventDefault();
+    //                }
+    //            });
+    //        }
+    //    })
+    //    .directive('fileModel', ['$parse', function ($parse) {
+    //        return {
+    //            restrict: 'A',
+    //            link: function (scope, element, attrs) {
+    //                var model = $parse(attrs.fileModel);
+    //                var modelSetter = model.assign;
+
+    //                element.bind('change', function () {
+    //                    scope.$apply(function () {
+    //                        modelSetter(scope, element[0].files[0]);
+    //                    });
+    //                });
+    //            }
+    //        };
+    //    }])
+    //    .service('fileUpload', ['$http', function ($http) {
+    //        this.uploadFileToUrl = function (idlocal, file, uploadUrl) {
+
+    //            var fd = new FormData();
+    //            fd.append('file', file);
+    //            fd.append('idlocal', idlocal);
+    //            $http.post(uploadUrl, fd, {
+    //                transformRequest: angular.identity,
+    //                headers: { 'Content-Type': undefined }
+    //            })
+    //                .success(function (data) {
+
+    //                })
+    //                .error(function () {
+
+    //                });
+    //        }
+    //    }]
+    //);
+
+
+    var app = angular.module('appNoCortar', [])
+
         .directive('fileModel', ['$parse', function ($parse) {
+
             return {
                 restrict: 'A',
                 link: function (scope, element, attrs) {
@@ -167,18 +211,29 @@
                     });
                 }
             };
-        }]);
+        }])
+    app.service('fileUpload', ['$http', function ($http) {
+        this.uploadFileToUrl = function (idlocal, file, uploadUrl) {
 
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('idlocal', idlocal);
+            $http.post(uploadUrl, fd, {
+                transformRequest: angular.identity,
+                headers: { 'Content-Type': undefined }
+            })
+                .success(function (data) {
 
+                })
+                .error(function () {
 
-
+                });
+        }
+    }]);
 
     app.controller('NoCortarCtrl', function ($scope, $http) {
 
-
         $scope.dataSuministro = {
-
-
             suministro: '',
             nroInstalacion: '',
             nroSerie: '',
@@ -186,14 +241,19 @@
             direccion: ''
         }
 
-        $scope.getData = function () {
-            $scope.ListandoCorteCuentaContrato();
+        $scope.getData = function (keyEvent) {
+            if (keyEvent.which === 13) {
+                $scope.ListandoCorteCuentaContrato();
+            }
         }
         $scope.valor = false;
 
         $scope.updateCorte = function () {
 
             var fecha_ini = document.getElementById('f_inicial').value;
+            const flagSuministroMasivo = ($scope.checkSuministros) ? 1 : 0;
+            const suministro = document.getElementById('txt_suministro').value;
+            let tiposervicio = 0;
 
             if (document.getElementById("cortess").checked != true && document.getElementById("reconexioness").checked != true) {
                 new PNotify({
@@ -204,7 +264,7 @@
                 return false;
             }
 
-            if (fecha_ini == '' || fecha_ini == null || fecha_ini ==undefined) {
+            if (fecha_ini == '' || fecha_ini == null || fecha_ini == undefined) {
                 new PNotify({
                     title: 'Sistemas',
                     text: 'Por favor Ingresar la fecha de asignacion.',
@@ -213,17 +273,17 @@
                 return;
             }
 
-
-            if (document.getElementById('suministro').value == "") {
-                new PNotify({
-                    title: 'Sistemas',
-                    text: 'Por favor Ingresar el Nro de Sumnistro.',
-                    type: 'error'
-                });
-                return false;
+            if (flagSuministroMasivo == 0) {
+                if (suministro == "") {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor Ingresar el Nro de Sumnistro.',
+                        type: 'error'
+                    });
+                    return false;
+                }
             }
-
-            var tiposervicio = 0;
+   
             if (document.getElementById("cortess").checked == true) {
                 tiposervicio = document.getElementById('cortess').value;
             }
@@ -232,9 +292,7 @@
                 tiposervicio = document.getElementById('reconexioness').value;
             }
 
-            var suministro = document.getElementById('suministro').value;
-
-
+            $('.sige-load').show();
             var variables = {
                 method: 'POST',
                 url: '../NoCortar/CambioEstadoCorte',
@@ -244,12 +302,13 @@
                 data: {
                     id_tiposervicio: parseInt(tiposervicio),
                     fecha_asignacion: fecha_ini,
-                    suministro: suministro
+                    suministro: suministro,
+                    SuministrosMasivos: flagSuministroMasivo
                 }
             }
             $http(variables)
                 .success(function (data) {
-                    console.log(data);
+                    $('.sige-load').hide();
 
                     if (data == true) {
                         new PNotify({
@@ -257,10 +316,17 @@
                             text: 'Proceso generado Exitosamente.',
                             type: 'success'
                         });
+                    } else {
+                        new PNotify({
+                            title: ' ',
+                            text: data,
+                            type: 'error'
+                        });
                     }
                 })
-                .error(function () {
-                    alert('Lo sentimos, Ocurrio un problema, vuelva a intentar.')
+                .error(function (err) {
+                    $('.sige-load').hide();
+                    alert(err)
                 });
 
         }
@@ -275,7 +341,7 @@
                 });
                 return false;
             }
-            if (document.getElementById('suministro').value == "") {
+            if (document.getElementById('txt_suministro').value == "") {
                 new PNotify({
                     title: 'Sistemas',
                     text: 'Por favor Ingresar el Numero de Sumnistro.',
@@ -294,7 +360,7 @@
                 tiposervicio = document.getElementById('reconexioness').value;
             }
             var fecha_ini = document.getElementById('f_inicial').value;
-            var suministro = document.getElementById('suministro').value;
+            var suministro = document.getElementById('txt_suministro').value;
 
 
 
@@ -345,15 +411,105 @@
         $scope.Limpiar = function () {
 
             $scope.dataSuministro.suministro = "";
-
             $scope.dataSuministro.nroInstalacion = "";
             $scope.dataSuministro.nroSerie = "";
             $scope.dataSuministro.cliente = "";
             $scope.dataSuministro.direccion = "";
-
             $scope.valor = false;
 
         }
+
+        $scope.Lista_agrupadoSuministro = [];
+
+        $scope.checkSuministros = false;
+        txt_suministro.disabled = false;
+        $scope.checkSuministros = false;
+
+        $scope.AbrirModal_suministroMasivo = function () {
+            const txt_suministro = document.getElementById('txt_suministro');
+ 
+
+            if ($scope.checkSuministros == true) {
+                $scope.nuevaimportacion_Suministro();
+                $('#modal_suministro').modal({ show: 'false' });
+                txt_suministro.value = '';
+                txt_suministro.disabled = true;
+            } else {
+                txt_suministro.disabled = false;
+                $scope.nuevaimportacion_Suministro();
+
+            }
+        }
+
+ 
+
+        $scope.nuevaimportacion_Suministro = function () {
+            $(":file").filestyle('clear');
+            $('#btn_verSum').attr('disabled', false);
+            $scope.Lista_agrupadoSuministro = [];
+            $scope.file = null
+        }
+
+        $scope.cerrarModalSuministros = function () {
+            const txt_suministro = document.getElementById('txt_suministro');
+            if ($scope.Lista_agrupadoSuministro.length == 0) {
+                $scope.checkSuministros = false;
+                txt_suministro.disabled = false;
+            }
+            $("#modal_suministro").modal('hide');
+        }
+
+        $scope.formatos = () => {
+            window.open('../formatos/FORMATO_NO_CORTAR.xlsx', '_blank')
+        }
+
+
+        $scope.uploadFile_suministro = function () {
+ 
+            if ($scope.file == null) {
+                new PNotify({
+                    title: ' ',
+                    text: 'Ningun Archivo Seleccionado..',
+                    type: 'error'
+                });
+            }
+            else {
+                $('#btn_verSum').attr('disabled', true);
+
+                $('.sige-load').show();
+                var file = $scope.file;
+                var uploadUrl = '../Importar_Excel/InsertaExcel_suministroMasivo_noCortar';
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('idServicio', 3);
+
+                $http.post(uploadUrl, fd,
+                    {
+                        transformRequest: angular.identity,
+                        headers: { 'Content-Type': undefined }
+                    }).success(function (res) {
+                        $('.sige-load').hide();
+
+                        if (res.ok == true) {
+                            $scope.Lista_agrupadoSuministro = res.data;
+                            new PNotify({
+                                title: ' ',
+                                text: 'Se cargo correctamente el listado de suministros.',
+                                type: 'success'
+                            });
+
+                        } else {
+                            alert(res.data);
+                        }
+                    })
+                    .error(function () {
+                        alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+                        $('.sige-load').hide();
+                    });
+            }
+        };
+
+ 
 
     });
 </script>
@@ -380,7 +536,7 @@
                                         <input type="radio" id="reconexioness" name="optradio" value="4">Reconexiones
                                     </label>
                                 </div>
- 
+
                                 <div class="col-md-4">
                                     <label class="control-label">Fecha Asignacion</label>
                                     <div class="input-group">
@@ -394,12 +550,25 @@
                         <div class="row">
                             <div class="col-xs-12 col-sm-8 col-md-8 col-lg-8">
                                 <div class="col-md-4">
-                                    <label for="f_inicial" class="control-label">Cuenta Contrato</label>
-                                    <input name="suministro" ng-enter="getData();" style="border-radius:5px;" id="suministro" class="form-control" ng-model="dataSuministro.suministro" placeholder="Cuenta Contrato" maxlength="15" onkeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;">
+                                    @*<label for="f_inicial" class="control-label">Cuenta Contrato</label>
+                                    <input name="suministro" ng-enter="getData();" style="border-radius:5px;" id="suministro" class="form-control"
+                                        ng-model="dataSuministro.suministro" placeholder="Cuenta Contrato" maxlength="15"
+                                        onkeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;"
+                                    >*@
+                                    <div class="form-group" style="margin-bottom: 0px;">
+                                        <label class="control-label"> Suministro </label>
+                                        <input type="checkbox" id="chk_masivo" style="margin-top: 2px; margin-left: 2px;" value="1" ng-model="checkSuministros" ng-click="AbrirModal_suministroMasivo()">
+                                        <label style="color:red" for="chk_masivo">Masivo</label>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <input id="txt_suministro"  ng-keypress="getData($event)"  ng-model="dataSuministro.suministro"  class="form-control" type="text" placeholder="Ingresar Suministro">
+                                    </div>
+
                                 </div>
                                 <div class="col-md-4">
                                     <label for="f_inicial" class="control-label">Nro Instalacion </label>
-                                    <input name="suministro" style="border-radius:5px;"  disabled ng-model="dataSuministro.nroInstalacion" class="form-control" placeholder="Nro Instalacion">
+                                    <input name="suministro" style="border-radius:5px;" disabled ng-model="dataSuministro.nroInstalacion" class="form-control" placeholder="Nro Instalacion">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="f_inicial" class="control-label">Nro Serie Medidor </label>
@@ -427,133 +596,76 @@
                                 <div class="form-group">
                                     <button type="submit" ng-click="updateCorte();" class="btn btn-info"> Grabar</button>
                                     <button type="submit" ng-click="Limpiar();" class="btn btn-success">Nuevo</button>
-                                 </div>
+                                </div>
                             </div>
                         </div>
                         <br />
 
 
-                        @*<div class="panel-body col-sm-12">
-
-            <div class="form-inline" style="padding-bottom:15px;">
-                <div class="col-sm-12">
-                    <div class="col-sm-4" style="padding-left:100px">
-                        <div class="form-group">
-                            <div class="col-lg-3">
-                                <label class="radio-inline">
-                                    <input type="radio" id="cortess" checked="checked" name="optradio" value="3">Cortes
-                                </label>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <div class="col-lg-3">
-                                <label class="radio-inline">
-                                    <input type="radio" id="reconexioness" name="optradio" value="4">Reconexiones
-                                </label>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="col-sm-4" style="padding:5px;">
-                        <div class="form-group">
-                            <div class="col-lg-4">
-                                <label for="f_inicial" class="col-lg-6 control-label">Fecha Asignacion</label>
-                            </div>
-                            <div class="col-lg-2">
-                                <div class="input-group">
-                                    <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
-                                    <input style="width:100px;" class="form-control" id="f_inicial" placeholder="dia/mes/año" type="text" value="@DateTime.Now.ToString("dd/MM/yyyy")" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-
-
-            <div class="form-inline ">
-                <div class="form-group">
-                    <label for="id_local" class="control-label col-sm-2">Cuenta Contrato</label>
-                </div>
-                <div class="form-group">
-
-                    <div class="form-group form-group-sm" style="padding-left:5px">
-                        <div class="input-group">
-                            <input name="suministro" ng-enter="getData();" style="border-radius:5px;" id="suministro" class="form-control" ng-model="dataSuministro.suministro" placeholder="Cuenta Contrato" maxlength="15" onkeypress="if (event.keyCode < 45 || event.keyCode > 57) event.returnValue = false;">
-                        </div>
-                    </div>
-
-                </div>
-
-
-                <div class="form-group" style="padding-left:5px;">
-
-                    <label for="_supervisor" class="control-label">Nro Instalacion</label>
-                </div>
-                <div class="form-group form-group">
-                    <div class="form-group form-group-sm">
-                        <div class="input-group">
-                            <input name="suministro" style="border-radius:5px;" ng-disabled="valor" ng-model="dataSuministro.nroInstalacion" class="form-control" placeholder="Nro Instalacion">
-                        </div>
-                    </div>
-                </div>
-
-
-                <div class="form-group">
-                    <label for="id_operario" class=" control-label">Nro Serie Medidor</label>
-                </div>
-                <div class="form-group" style="padding-left: 5px; padding-right: 5px;">
-                    <div class="form-group form-group-sm">
-                        <div class="input-group">
-
-                            <input name="suministro" style="border-radius:5px;" ng-disabled="valor" ng-model="dataSuministro.nroSerie" class="form-control" placeholder="Nro Serie Medidor">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-horizontal" style="padding:5px">
-                <div class="form-group">
-                    <label class="control-label col-sm-1" for="email">Cliente:</label>
-                    <div class="col-sm-8">
-                        <input type="email" class="form-control" ng-disabled="valor" ng-model="dataSuministro.cliente" id="email" placeholder="Cliente">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="control-label col-sm-1" for="pwd">Direccion:</label>
-                    <div class="col-sm-8">
-                        <input type="text" class="form-control" ng-disabled="valor" ng-model="dataSuministro.direccion" id="pwd" placeholder="Direccion">
-                    </div>
-                </div>
-
-                <div class="form-group" style=" float:right;padding-left:10px">
-                    <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" class="btn btn-danger">Cerrar</button>
-                    </div>
-                </div>
-
-                <div class="form-group" style=" float:right;padding-left:10px">
-                    <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" ng-click="updateCorte();" class="btn btn-info">Guardar</button>
-                    </div>
-                </div>
-
-                <div class="form-group" style=" float:right;padding-left:10px">
-                    <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" ng-click="Limpiar();" class="btn btn-success">Nuevo</button>
-                    </div>
-                </div>
-            </div>
-
-
-        </div>*@
                     </div>
                 </div>
             </div>
 
         </div>
     </div>
+
+
+    <div id="modal_suministro" class="modal fade" role="dialog" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog  modal_dsige " style="width:500px;">
+            <div class="panel panel-oscuro">
+                <div class="panel-heading">
+                    <h6 class="modal-title"><i class="fa fa-cloud-upload"></i> Importar Suministros</h6>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 ">
+                            <form>
+                                <input id="id_fileSum" type="file" class="filestyle" file-model="file" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" data-placeholder="Ningun Archivo Seleccionado" data-buttonname="btn-primary" data-size="sm" data-buttonbefore="true" data-buttontext="  Seleccionar Archivo..">
+                            </form>
+                        </div>
+                    </div>
+                    <br />
+                    <div class="row">
+                        <div class="col-xs-12 col-sm-12 col-md-12  col-lg-12 " style="text-align:center">
+                            <button id="btn_verSum" type="button" class="btn btn-primary btn-sm" ng-click="uploadFile_suministro()"><i class="fa fa-upload"></i> Subir</button>
+                            <button id="btn_nuevaSum" type="button" class="btn btn-primary btn-sm" ng-click="nuevaimportacion_Suministro();"><i class="fa fa-file-excel-o"></i> Nueva Importacion</button>
+                            <button id="btnFomato" type="button" class="btn btn-success btn-sm" ng-click="formatos();"><i class="fa fa-file-excel-o"></i> Formato</button>
+                        </div>
+                    </div>
+                    <hr style="margin-top: 5px; " />
+
+                    <div class="row">
+                        <div class="col-md-12 col-sm-12 col-lg-12">
+                            <div class="form-group">
+                                <table id="tbl_alertas" class="table table-condensed table-bordered table-responsive" cellspacing="0" style="font-family: tahoma;margin-bottom: 0px; font-size: 10px;">
+                                    <thead style="background:#F0F3F5;">
+                                        <tr>
+                                            <th>#</th>
+                                            <th style="text-align:center">CANTIDAD DE SUMINISTROS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="font-family: tahoma; font-size: 9px;">
+                                        <tr ng-repeat="lista in Lista_agrupadoSuministro">
+                                            <td>{{$index + 1}}</td>
+                                            <td class="text-right">{{lista.cantidad}}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Mantenimiento" style="float: right;">
+                                <button id="btn_cancel" role="button" class="btn btn-default" ng-click="cerrarModalSuministros()"><i class="fa fa-close fa-lg"></i> Cerrar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

@@ -36,7 +36,6 @@ namespace DSIGE.Modelo
             {
                 throw e;
             }
-
         }
 
 

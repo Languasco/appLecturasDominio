@@ -314,7 +314,7 @@ namespace DSIGE.Dato
             return Resultado;
         }
 
-        public string Capa_Dato_Set_ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar)
+        public string Capa_Dato_Set_ActualizandoCortesReconexiones(int cod_Cortelectura, string DatoModificar, string campoModificar, string comentarioCorte, int idUsuario)
         {
             cadenaCnx = System.Configuration.ConfigurationManager.ConnectionStrings["dataSige"].ConnectionString;
             string Resultado = "";
@@ -324,7 +324,7 @@ namespace DSIGE.Dato
                 {
                     cn.Open();
 
-                    using (SqlCommand cmd = new SqlCommand("SP_U_CORTES_RECONEXIONES", cn))
+                    using (SqlCommand cmd = new SqlCommand("SP_U_CORTES_RECONEXIONES_V2", cn))
                     {
                         cmd.CommandTimeout = 0;
                         cmd.CommandType = CommandType.StoredProcedure;
@@ -332,6 +332,8 @@ namespace DSIGE.Dato
                         cmd.Parameters.Add("@id_Cortelectura", SqlDbType.Int).Value = cod_Cortelectura;
                         cmd.Parameters.Add("@DatoModificar", SqlDbType.VarChar).Value = DatoModificar;
                         cmd.Parameters.Add("@CampoModificar", SqlDbType.VarChar).Value = campoModificar;
+                        cmd.Parameters.Add("@comentarioCorte", SqlDbType.VarChar).Value = comentarioCorte;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
                         cmd.ExecuteNonQuery();
                         Resultado = "Ok";
                     }
@@ -1064,6 +1066,7 @@ namespace DSIGE.Dato
                                     obj_entidad.id_Observacion_corte = Fila["id_Observacion_corte"].ToString();
                                     obj_entidad.id_resultadoObsCorte = Fila["id_resultadoObsCorte"].ToString();
                                     obj_entidad.ubicacion_Medidor = Fila["ubicacion_Medidor"].ToString();
+                                    obj_entidad.Observacion_corte = Fila["Observacion_corte"].ToString();
                                 }
                                 else if (id_tipo_servicio == 6)  // Repartos
                                 {
@@ -5127,9 +5130,11 @@ namespace DSIGE.Dato
                             }
                             else
                             {
-                                var guid = Guid.NewGuid();
-                                var guidB = guid.ToString("B");
-                                _correlativo = Guid.Parse(guidB) + ".txt";
+                                //var guid = Guid.NewGuid();
+                                //var guidB = guid.ToString("B");
+                                //_correlativo = Guid.Parse(guidB) + ".txt";
+
+                                _correlativo = dt_detalle.Rows[0]["NombreArchivo"].ToString();
 
                                 _rutafile = System.Web.Hosting.HostingEnvironment.MapPath("~/Upload/" + _correlativo);
                                 _rutaServer = ConfigurationManager.AppSettings["servidor-archivos"];
@@ -5148,6 +5153,328 @@ namespace DSIGE.Dato
             return Resultado;
         }
 
+
+        //---- macros 
+
+        public object GenerarReporte_macros_ordenes(int idServicio, int idEstado, string fechaAsignacion, int tipoMacro, int idUsuario)
+        {
+            Resultado res = new Resultado();
+            try
+            {
+                using (SqlConnection cn = new SqlConnection(cadenaCnx))
+                {
+                    cn.Open();
+                    using (SqlCommand cmd = new SqlCommand("SP_S_ENVIAR_TRABAJO_CLIENTE_MACRO_ORDENES", cn))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idServicio;
+                        cmd.Parameters.Add("@idEstado", SqlDbType.Int).Value = idEstado;
+                        cmd.Parameters.Add("@fechaAsignacion", SqlDbType.VarChar).Value = fechaAsignacion;
+                        cmd.Parameters.Add("@tipoMacro", SqlDbType.Int).Value = tipoMacro;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+                        DataTable dt_detalle = new DataTable();
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            da.Fill(dt_detalle);
+                            if (dt_detalle.Rows.Count <= 0)
+                            {
+                                res.ok = false;
+                                res.data = "0|No hay informacion disponible";
+                            }
+                            else
+                            {
+                                res.ok = true;
+                                res.data = GenerarExcel_macros_ordenes(dt_detalle, idServicio);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
+
+
+        public string GenerarExcel_macros_ordenes(DataTable listDetalle, int idServicio)
+        {
+            string Res = "";
+            string FileRuta = "";
+            string FileExcel = "";
+            int _fila = 1;
+            int pos = 1;
+            string nameServicio = "";
+
+
+            try
+            {
+                var guid = Guid.NewGuid();
+                var guidB = guid.ToString("B");
+
+                nameServicio = idServicio == 3 ? "corte" : "reconexiones";
+
+                var nombreFile = "macros_ordenes_" + nameServicio + "_" + Guid.Parse(guidB) + ".xlsx";
+
+                FileRuta = System.Web.Hosting.HostingEnvironment.MapPath("~/Temp/" + nombreFile);
+                FileExcel = ConfigurationManager.AppSettings["Archivos"] + nombreFile;
+
+                FileInfo _file = new FileInfo(FileRuta);
+
+                using (Excel.ExcelPackage oEx = new Excel.ExcelPackage(_file))
+                {
+                    Excel.ExcelWorksheet oWs = oEx.Workbook.Worksheets.Add("macros_ordenes");
+                    oWs.Cells.Style.Font.SetFromFont(new Font("Tahoma", 8));
+
+                    oWs.Cells[_fila, pos].Value = "ORDERID"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "COMP_CODE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PLANT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ORDER_TYPE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PRIORITY"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "FUNCLOC"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "EQUIPMENT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SHORT_TEXT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "S_STATUS"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "U_STATUS"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "CUSTOMER"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "NAME_LIST"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SERVICE_MATERIAL"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SERVICE_MATL_DESC"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SALES_DOC_NUMBER"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SALES_ITM_NUMBER"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PLANGROUP"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "MN_WK_CTR"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "NOTIF_NO"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PMACTTYPE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "START_DATE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "FINISH_DATE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "REVISION"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADDR1_CLIENT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADDR2_CLIENT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADDR3_CLIENT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADDR4_CLIENT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADRC1"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADRC2"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ADRC3"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "MATERIAL"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SERIALNO"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "DEVICEID"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "OVERHEAD_KEY"; pos += 1;
+
+                    _fila += 1;
+
+                    foreach (DataRow item in listDetalle.Rows)
+                    {
+                        pos = 1;
+
+                        oWs.Cells[_fila, pos].Value = item["ORDERID"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["COMP_CODE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PLANT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ORDER_TYPE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PRIORITY"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["FUNCLOC"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["EQUIPMENT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SHORT_TEXT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["S_STATUS"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["U_STATUS"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["CUSTOMER"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["NAME_LIST"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SERVICE_MATERIAL"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SERVICE_MATL_DESC"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SALES_DOC_NUMBER"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SALES_ITM_NUMBER"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PLANGROUP"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["MN_WK_CTR"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["NOTIF_NO"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PMACTTYPE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["START_DATE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["FINISH_DATE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["REVISION"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADDR1_CLIENT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADDR2_CLIENT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADDR3_CLIENT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADDR4_CLIENT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADRC1"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADRC2"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ADRC3"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["MATERIAL"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SERIALNO"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["DEVICEID"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["OVERHEAD_KEY"].ToString(); pos += 1;
+
+                        _fila++;
+                    }
+
+                    for (int k = 1; k <= 34; k++)
+                    {
+                        oWs.Column(k).AutoFit();
+                    }
+
+                    oWs.Row(1).Style.Font.Bold = true;
+                    oWs.Row(1).Style.HorizontalAlignment = Style.ExcelHorizontalAlignment.Center;
+                    oWs.Row(1).Style.VerticalAlignment = Style.ExcelVerticalAlignment.Center;
+
+                    oEx.Save();
+                    Res = FileExcel;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return Res;
+        }
+
+
+
+        public object GenerarReporte_macros_operaciones(int idServicio, int idEstado, string fechaAsignacion, int tipoMacro, int idUsuario)
+        {
+            Resultado res = new Resultado();
+            try
+            {
+                using (SqlConnection cn = new SqlConnection(cadenaCnx))
+                {
+                    cn.Open();
+                    using (SqlCommand cmd = new SqlCommand("SP_S_ENVIAR_TRABAJO_CLIENTE_MACRO_OPERACIONES", cn))
+                    {
+                        cmd.CommandTimeout = 0;
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.Add("@idServicio", SqlDbType.Int).Value = idServicio;
+                        cmd.Parameters.Add("@idEstado", SqlDbType.Int).Value = idEstado;
+                        cmd.Parameters.Add("@fechaAsignacion", SqlDbType.VarChar).Value = fechaAsignacion;
+                        cmd.Parameters.Add("@tipoMacro", SqlDbType.Int).Value = tipoMacro;
+                        cmd.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+                        DataTable dt_detalle = new DataTable();
+                        using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                        {
+                            da.Fill(dt_detalle);
+                            if (dt_detalle.Rows.Count <= 0)
+                            {
+                                res.ok = false;
+                                res.data = "0|No hay informacion disponible";
+                            }
+                            else
+                            {
+                                res.ok = true;
+                                res.data = GenerarExcel_macros_operaciones(dt_detalle, idServicio);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                res.ok = false;
+                res.data = ex.Message;
+            }
+            return res;
+        }
+
+
+
+        public string GenerarExcel_macros_operaciones(DataTable listDetalle, int idServicio)
+        {
+            string Res = "";
+            string FileRuta = "";
+            string FileExcel = "";
+            int _fila = 1;
+            int pos = 1;
+            string nameServicio = "";
+
+
+            try
+            {
+                var guid = Guid.NewGuid();
+                var guidB = guid.ToString("B");
+
+                nameServicio = idServicio == 3 ? "corte" : "reconexiones";
+
+                var nombreFile = "macros_operaciones_" + nameServicio + "_" + Guid.Parse(guidB) + ".xlsx";
+
+                FileRuta = System.Web.Hosting.HostingEnvironment.MapPath("~/Temp/" + nombreFile);
+                FileExcel = ConfigurationManager.AppSettings["Archivos"] + nombreFile;
+
+                FileInfo _file = new FileInfo(FileRuta);
+
+                using (Excel.ExcelPackage oEx = new Excel.ExcelPackage(_file))
+                {
+                    Excel.ExcelWorksheet oWs = oEx.Workbook.Worksheets.Add("macros_operaciones");
+                    oWs.Cells.Style.Font.SetFromFont(new Font("Tahoma", 8));
+
+                    oWs.Cells[_fila, pos].Value = "ORDERID"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ACTIVITY"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "WORK_CNTR"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PLANT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "PERS_NO"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "ACT_WORK"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "UN_WORK"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "POSTG_DATE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "FIN_CONF"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "COMPLETE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "UN_REM_WRK"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "EXEC_START_DATE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "EXEC_START_TIME"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "EXEC_FIN_DATE"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "EXEC_FIN_TIME"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "DESCRIPTION"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "SYSTEM_STATUS_TEXT"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "FIELD_USER_STATUS"; pos += 1;
+                    oWs.Cells[_fila, pos].Value = "STANDARD_TEXT_KEY"; pos += 1;
+
+                    _fila += 1;
+
+                    foreach (DataRow item in listDetalle.Rows)
+                    {
+                        pos = 1;
+
+                        oWs.Cells[_fila, pos].Value = item["ORDERID"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ACTIVITY"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["WORK_CNTR"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PLANT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["PERS_NO"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["ACT_WORK"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["UN_WORK"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["POSTG_DATE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["FIN_CONF"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["COMPLETE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["UN_REM_WRK"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["EXEC_START_DATE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["EXEC_START_TIME"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["EXEC_FIN_DATE"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["EXEC_FIN_TIME"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["DESCRIPTION"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["SYSTEM_STATUS_TEXT"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["FIELD_USER_STATUS"].ToString(); pos += 1;
+                        oWs.Cells[_fila, pos].Value = item["STANDARD_TEXT_KEY"].ToString(); pos += 1;
+
+                        _fila++;
+                    }
+
+                    for (int k = 1; k <= 19; k++)
+                    {
+                        oWs.Column(k).AutoFit();
+                    }
+
+                    oWs.Row(1).Style.Font.Bold = true;
+                    oWs.Row(1).Style.HorizontalAlignment = Style.ExcelHorizontalAlignment.Center;
+                    oWs.Row(1).Style.VerticalAlignment = Style.ExcelVerticalAlignment.Center;
+
+                    oEx.Save();
+                    Res = FileExcel;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            return Res;
+        }
 
 
 
